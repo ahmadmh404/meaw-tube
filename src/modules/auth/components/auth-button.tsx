@@ -22,7 +22,7 @@ export function AuthButton() {
         </SignInButton>
       )}
 
-      {/* TODO: ADd Menu Items for Studio and user profile */}
+      {/* TODO: Add Menu Items for Stbunudio and user profile */}
       {isSignedIn && <UserButton />}
     </>
   );

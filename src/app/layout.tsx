@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 
 import "./globals.css";
+import { TRPCReactProvider } from "@/trpc/trpc-client";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -40,7 +41,9 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
-        <ClerkProvider afterSignOutUrl={"/"}>{children}</ClerkProvider>
+        <TRPCReactProvider>
+          <ClerkProvider afterSignOutUrl={"/"}>{children}</ClerkProvider>
+        </TRPCReactProvider>
       </body>
     </html>
   );
