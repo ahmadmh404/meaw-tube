@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { UserButton, useAuth, SignInButton } from "@clerk/nextjs";
 
-import { UserCircleIcon } from "lucide-react";
+import { ClapperboardIcon, UserCircleIcon } from "lucide-react";
 
 export function AuthButton() {
   const { isSignedIn } = useAuth();
@@ -23,7 +23,17 @@ export function AuthButton() {
       )}
 
       {/* TODO: Add Menu Items for Stbunudio and user profile */}
-      {isSignedIn && <UserButton />}
+      {isSignedIn &&
+        <UserButton>
+          {/* TODO: Add User Button */}
+          <UserButton.MenuItems>
+            <UserButton.Link
+              label="Studio"
+              href="/studio"
+              labelIcon={<ClapperboardIcon className="size-4" />}
+            />
+          </UserButton.MenuItems>
+        </UserButton>}
     </>
   );
 }
