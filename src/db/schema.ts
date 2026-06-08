@@ -17,3 +17,16 @@ export const categories = pgTable('categories', {
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull()
 }, (table) => [uniqueIndex("name_idx").on(table.name)])
+
+export const videos = pgTable('videos', {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").unique().notNull(),
+    description: text("description"),
+    userId: uuid("user_Id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    categoryId: uuid("category_id").references(() => categories.id, { onDelete: 'cascade' }),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull()
+})
+
+
