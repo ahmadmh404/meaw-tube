@@ -4,7 +4,11 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  integer,
+  pgEnum,
 } from "drizzle-orm/pg-core";
+
+export const VideoVisibility = pgEnum("video_visiblity", ["public", "private"]);
 
 export const users = pgTable(
   "users",
@@ -43,6 +47,10 @@ export const videos = pgTable("videos", {
   muxPlaybackId: text("mux_playback_id").unique(),
   muxTrackId: text("mux_track_id").unique(),
   muxTrackStatus: text("mux_track_status").unique(),
+  thumbnailUrl: text("thumbnail_url"),
+  previewUrl: text("preview_url"),
+  duration: integer("duration"),
+  visibility: VideoVisibility("visibility").default("private").notNull(),
 
   userId: uuid("user_Id")
     .references(() => users.id, { onDelete: "cascade" })
