@@ -66,9 +66,9 @@ function VideosSectionSuspense() {
                 </TableHeader>
 
                 <TableBody>
-                    {query.data?.pages.flatMap(page => page.itmes).map(item => (
+                    {query.data?.pages.flatMap(page => page.itmes).map((item, index) => (
                         <TableRow
-                            key={item.id}
+                            key={item.id || index}
                             className="cursor-pointer"
                         >
                             <TableCell>
@@ -101,7 +101,7 @@ function VideosSectionSuspense() {
                                 Likes
                             </TableCell>
                         </TableRow>
-                    ))};
+                    ))}
                 </TableBody>
             </Table>
         </div>
