@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
+import { ResponsiveModal } from "./responsive-dialog";
+import { StudioUploader } from "./studio-uploader";
 
 export function StudioUploadModal() {
   const trpc = useTRPC();
@@ -25,13 +27,26 @@ export function StudioUploadModal() {
   );
 
   return (
-    <Button onClick={() => create.mutate()} variant={"secondary"}>
-      {create.isPending ? (
-        <Loader2Icon className="animate-spin" />
-      ) : (
-        <PlusIcon />
-      )}
-      Create
-    </Button>
+    <>
+      <ResponsiveModal
+        title="Upload Video"
+        open={!!create.data?.url}
+        onOpenChange={() => create.reset()}>
+        {create.data?.url ? (
+          <StudioUploader endpoint={create.data?.url} onSuccess={() => {}} />
+        ) : (
+          <Loader2Icon className="animate-spin" />
+        )}
+      </ResponsiveModal>
+
+      <Button onClick={() => create.mutate()} variant={"secondary"}>
+        {create.isPending ? (
+          <Loader2Icon className="animate-spin" />
+        ) : (
+          <PlusIcon />
+        )}
+        Create
+      </Button>
+    </>
   );
 }

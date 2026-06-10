@@ -66,9 +66,9 @@ export function FilterCarousel({ data, value, onSelect, isLoading }: Props) {
 
                 {isLoading && (
                     Array.from({ length: 14 }).map((_, index) => (
-                        <CarouselItem key={index}>
+                        <CarouselItem className="pl-3 basis-auto" key={index}>
                             <Skeleton className="px-3 py-1 rounded-lg h-full text-sm w-25 font-semibold">
-                                &sbsp;
+                                &nbsp;
                             </Skeleton>
                         </CarouselItem>
                     ))

@@ -8,11 +8,15 @@
     "dev:webhook": "ngrok http --url=turbine-aghast-strained.ngrok-free.dev 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:push": "bun x drizzle-kit push",
+    "db:studio": "bun x drizzle-kit studio"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@clerk/nextjs": "^7.3.7",
+    "@mux/mux-node": "^14.1.1",
+    "@mux/mux-uploader-react": "^1.5.0",
     "@neondatabase/serverless": "^1.1.0",
     "@tanstack/react-query": "^5.101.0",
     "@trpc/client": "^11.17.0",
