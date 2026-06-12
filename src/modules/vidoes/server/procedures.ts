@@ -1,7 +1,10 @@
 import { db } from "@/db";
-import { videos } from "@/db/schema";
+import { videos, videoUpdateSchema } from "@/db/schema";
 import { mux } from "@/lib/mux";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
+import z from "zod";
 
 export const videosRouter = createTRPCRouter({
   create: protectedProcedure.mutation(async ({ ctx }) => {
@@ -41,4 +44,50 @@ export const videosRouter = createTRPCRouter({
 
     return { video, url: upload.url };
   }),
+
+  update: protectedProcedure
+    .input(videoUpdateSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.user;
+      const validatedData = videoUpdateSchema.safeParse(input);
+
+      if (!validatedData.success || !input.id) {
+        throw new TRPCError({ code: "BAD_REQUEST" });
+      }
+
+      const updated = await db
+        .update(videos)
+        .set({
+          title: input.title,
+          description: input.description,
+          categoryId: input.categoryId,
+          visibility: input.visibility,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(videos.id, input.id), eq(videos.userId, userId)));
+
+      if (!updated) {
+        return new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      return { updated };
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.user;
+      const { id: vidoeId } = input;
+
+      const [deleted] = await db
+        .delete(videos)
+        .where(and(eq(videos.id, vidoeId), eq(videos.userId, userId)))
+        .returning();
+
+      if (!deleted) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      return { deleted };
+    }),
 });

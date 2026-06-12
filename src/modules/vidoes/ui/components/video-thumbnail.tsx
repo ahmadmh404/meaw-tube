@@ -38,8 +38,9 @@ export function VideoThumbnail({
 
       {/* Video Duration Box */}
       {/* TODO: Add Video Duration Box */}
-      <div className="absolute bottom-2 right-2 px-1 py-0.5 rounded bg-black/80 text-white text-xs font-medium"></div>
-      {formatDuration(duration)}
+      <div className="absolute bottom-2 right-2 px-1 py-0.5 rounded bg-black/80 text-white text-xs font-medium">
+        {formatDuration(duration)}
+      </div>
     </div>
   );
 }
