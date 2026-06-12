@@ -43,7 +43,6 @@ export function StudioUploader({ endpoint, onSuccess }: SutdioUploaderProps) {
 
         <span className="hidden" slot="separator"></span>
         <MuxUploaderStatus muxUploader={uploadId} className="text-sm" />
-
         <MuxUploaderProgress
           muxUploader={uploadId}
           className="text-sm"
