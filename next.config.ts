@@ -4,7 +4,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "image.mux.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "image.mux.com" },
+      {
+        protocol: "https",
+        hostname: "b257ed6mhc.ufs.sh",
+      },
+    ],
   },
 };
 

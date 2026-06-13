@@ -48,10 +48,17 @@ import {
   CopyCheckIcon,
   CopyIcon,
   Globe2Icon,
+  ImagePlusIcon,
   LockIcon,
   MoreVerticalIcon,
+  RotateCcwIcon,
+  Sparkles,
+  SparklesIcon,
   TrashIcon,
 } from "lucide-react";
+import Image from "next/image";
+import { THUMBNAIL_FALLBACK } from "@/modules/vidoes/constatns";
+import { ThumbnailUploadModal } from "../components/thumbnail-upload-modal";
 
 interface FormSectionProps {
   videoId: string;
@@ -77,16 +84,20 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
+  const [thumbnailModalOpen, setThumbnailModalOpen] = useState(false);
+
   const update = useMutation(trpc.videos.update.mutationOptions());
   const remove = useMutation(trpc.videos.delete.mutationOptions());
+  const resotreThumbnail = useMutation(
+    trpc.videos.restoreThumbnail.mutationOptions(),
+  );
+
   const { data: video } = useSuspenseQuery(
     trpc.studio.getOne.queryOptions({ id: videoId }),
   );
   const { data: categories } = useSuspenseQuery(
     trpc.categories.getMany.queryOptions(),
   );
-
-  console.log({ status: video.video.muxStatus });
 
   const fullURL = `${process.env.VERCEL_URL || "http://localhost:3000"}/vidoes/${video.video.id}`;
   const [isCopied, setIsCopied] = useState(false);
@@ -149,213 +160,290 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
     );
   }
 
+  async function onRestore() {
+    await resotreThumbnail.mutateAsync(
+      { id: videoId },
+      {
+        onSuccess: () => {
+          toast.success("Thumbail Restored");
+          queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+          queryClient.invalidateQueries({
+            queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+          });
+        },
+        onError: (err) => {
+          console.log("ERROR DELETING VIDOE", { error: err.message });
+          toast.error("Error replacing video thumbnail...");
+        },
+      },
+    );
+  }
+
   return (
-    <form id="update-video-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="w-full flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Video Details</h1>
-          <p className="text-xs text-muted-foreground">
-            Manage your video details
-          </p>
-        </div>
-        <div className="flex items-center gap-x-2">
-          <Button
-            type="submit"
-            disabled={form.formState.isSubmitting || update.isPending}>
-            Save
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant={"ghost"} size={"icon"}>
-                <MoreVerticalIcon />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                disabled={remove.isPending || update.isPending}
-                onClick={onDelete}>
-                <TrashIcon className="size-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+    <>
+      <ThumbnailUploadModal
+        videoId={videoId}
+        open={thumbnailModalOpen}
+        onOpenChange={setThumbnailModalOpen}
+      />
 
-      <FieldGroup className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="space-y-8 lg:col-span-3">
-          <Controller
-            name="title"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>Titles</FieldLabel>
-                {/* TODO: Add AI generate button */}
+      <form id="update-video-form" onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="w-full flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Video Details</h1>
+            <p className="text-xs text-muted-foreground">
+              Manage your video details
+            </p>
+          </div>
+          <div className="flex items-center gap-x-2">
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting || update.isPending}>
+              Save
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={"ghost"} size={"icon"}>
+                  <MoreVerticalIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  disabled={remove.isPending || update.isPending}
+                  onClick={onDelete}>
+                  <TrashIcon className="size-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
 
-                <Input
-                  {...field}
-                  placeholder="Add a title to you video"
-                  aria-invalid={fieldState.invalid}
+        <FieldGroup className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="space-y-8 lg:col-span-3">
+            <Controller
+              name="title"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Titles</FieldLabel>
+                  {/* TODO: Add AI generate button */}
+
+                  <Input
+                    {...field}
+                    placeholder="Add a title to you video"
+                    aria-invalid={fieldState.invalid}
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="description"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Description</FieldLabel>
+                  {/* TODO: Add AI generate button */}
+
+                  <Textarea
+                    {...field}
+                    value={field.value ?? ""}
+                    rows={10}
+                    className="resize-none pr-10"
+                    placeholder="Add a Description to you video"
+                    aria-invalid={fieldState.invalid}
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="thumbnailUrl"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Thumbnail</FieldLabel>
+
+                  <div className="p-0.5 border border-dashed border-neutral-400 relative h-21 w-38.25! group">
+                    <Image
+                      fill
+                      alt="thumbnail"
+                      src={video.video.thumbnailUrl || THUMBNAIL_FALLBACK}
+                      className="object-cover rounded-lg"
+                    />
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          size={"icon"}
+                          className="bg-black/50 hover:bg-black/50 absolute top-1 right-1 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 duration-300 size-7">
+                          <MoreVerticalIcon className="text-white" />
+                        </Button>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent
+                        className="w-fit"
+                        align="start"
+                        side="right">
+                        <DropdownMenuItem
+                          onClick={() => setThumbnailModalOpen(true)}>
+                          <ImagePlusIcon className="mr-1 size-4" />
+                          Change
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <SparklesIcon className="mr-1 size-4" />
+                          AI Generated
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={onRestore}>
+                          <RotateCcwIcon className="mr-1 size-4" />
+                          Restored
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="categoryId"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Category</FieldLabel>
+
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value ?? undefined}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a Category" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id}
+                          className="capitalize">
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </div>
+
+          <div className="flex flex-col gap-y-8 lg:col-span-2">
+            <div className="flex flex-col gap-4 bg-[#f9f9f9] rounded-xl overflow-hidden h-fit">
+              <div className="aspect-video relative overflow-hidden">
+                <VideoPlayer
+                  playbackId={video.video.muxPlaybackId}
+                  thumbnailUrl={video.video.thumbnailUrl}
+                  autoPlay={false}
                 />
+              </div>
+              <div className="p-4 flex flex-col gap-y-6">
+                <div className="flex justify-between items-center gap-x-2">
+                  <div className="flex flex-col gap-y-1">
+                    <p className="text-xs text-muted-foreground">Video Link</p>
+                    <div className="flex items-center gap-x-2">
+                      <Link href={`/vidoes/${video.video.id}`}>
+                        <p className="line-clamp-1 text-sm text-blue-500">
+                          {fullURL}
+                        </p>
+                      </Link>
 
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
+                      <Button
+                        type="button"
+                        variant={"ghost"}
+                        size={"icon"}
+                        className="shrink-0"
+                        onClick={onCopy}
+                        disabled={isCopied}>
+                        {isCopied ? <CopyCheckIcon /> : <CopyIcon />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex flex-col gap-y-1">
+                    <p className="text-muted-foreground text-xs">
+                      Video Status
+                    </p>
+                    <p className="text-sm capitalize">
+                      {video.video.muxStatus || "preparing"}
+                    </p>
+                  </div>
+                </div>
 
-          <Controller
-            name="description"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>Description</FieldLabel>
-                {/* TODO: Add AI generate button */}
-
-                <Textarea
-                  {...field}
-                  value={field.value ?? ""}
-                  rows={10}
-                  className="resize-none pr-10"
-                  placeholder="Add a Description to you video"
-                  aria-invalid={fieldState.invalid}
-                />
-
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-          {/* TODO: Add thumbnail field here */}
-
-          <Controller
-            name="categoryId"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>Category</FieldLabel>
-
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value ?? undefined}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a Category" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem
-                        key={category.id}
-                        value={category.id}
-                        className="capitalize">
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-        </div>
-
-        <div className="flex flex-col gap-y-8 lg:col-span-2">
-          <div className="flex flex-col gap-4 bg-[#f9f9f9] rounded-xl overflow-hidden h-fit">
-            <div className="aspect-video relative overflow-hidden">
-              <VideoPlayer
-                playbackId={video.video.muxPlaybackId}
-                thumbnailUrl={video.video.thumbnailUrl}
-                autoPlay={false}
-              />
-            </div>
-            <div className="p-4 flex flex-col gap-y-6">
-              <div className="flex justify-between items-center gap-x-2">
-                <div className="flex flex-col gap-y-1">
-                  <p className="text-xs text-muted-foreground">Video Link</p>
-                  <div className="flex items-center gap-x-2">
-                    <Link href={`/vidoes/${video.video.id}`}>
-                      <p className="line-clamp-1 text-sm text-blue-500">
-                        {fullURL}
-                      </p>
-                    </Link>
-
-                    <Button
-                      type="button"
-                      variant={"ghost"}
-                      size={"icon"}
-                      className="shrink-0"
-                      onClick={onCopy}
-                      disabled={isCopied}>
-                      {isCopied ? <CopyCheckIcon /> : <CopyIcon />}
-                    </Button>
+                <div className="flex justify-between items-center">
+                  <div className="flex flex-col gap-y-1">
+                    <p className="text-muted-foreground text-xs">
+                      Subtitles Status
+                    </p>
+                    <p className="text-sm capitalize">
+                      {video.video.muxTrackStatus || "No Subtitles"}
+                    </p>
                   </div>
                 </div>
               </div>
-              <div className="flex justify-between items-center">
-                <div className="flex flex-col gap-y-1">
-                  <p className="text-muted-foreground text-xs">Video Status</p>
-                  <p className="text-sm capitalize">
-                    {video.video.muxStatus || "preparing"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div className="flex flex-col gap-y-1">
-                  <p className="text-muted-foreground text-xs">
-                    Subtitles Status
-                  </p>
-                  <p className="text-sm capitalize">
-                    {video.video.muxTrackStatus || "No Subtitles"}
-                  </p>
-                </div>
-              </div>
             </div>
+
+            <Controller
+              name="visibility"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Visibility</FieldLabel>
+
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value ?? undefined}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select visibility" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value={"public"} className="capitalize">
+                        <div className="flex items-center">
+                          <Globe2Icon className="mr-2 size-4" />
+                          Public
+                        </div>
+                      </SelectItem>
+                      <SelectItem value={"private"} className="capitalize">
+                        <div className="flex items-center">
+                          <LockIcon className="mr-2 size-4" />
+                          Private
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
           </div>
-
-          <Controller
-            name="visibility"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>Visibility</FieldLabel>
-
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value ?? undefined}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select visibility" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    <SelectItem value={"public"} className="capitalize">
-                      <div className="flex items-center">
-                        <Globe2Icon className="mr-2 size-4" />
-                        Public
-                      </div>
-                    </SelectItem>
-                    <SelectItem value={"private"} className="capitalize">
-                      <div className="flex items-center">
-                        <LockIcon className="mr-2 size-4" />
-                        Private
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-        </div>
-      </FieldGroup>
-    </form>
+        </FieldGroup>
+      </form>
+    </>
   );
 }
