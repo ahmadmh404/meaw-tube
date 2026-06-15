@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { formatDuration } from "@/lib/utils";
-import { THUMBNAIL_FALLBACK } from "../../constatns";
+import { THUMBNAIL_FALLBACK } from "../../constants";
 
 interface VideoThumbnailProps {
   title: string;
@@ -16,7 +16,7 @@ export function VideoThumbnail({
   thumbnailUrl,
   previewUrl,
 }: VideoThumbnailProps) {
-  console.log("VIDEO DURATION: ", duration);
+  console.log("VIDEO DURATION: ", previewUrl);
 
   return (
     <div className="relative group">

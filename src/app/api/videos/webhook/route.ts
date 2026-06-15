@@ -142,12 +142,12 @@ export async function POST(req: Request) {
         .from(videos)
         .where(eq(videos.muxUploadId, deleteData.upload_id));
 
-      if (existingVideo.thumbnailKey) {
-        const res = await utApi.deleteFiles(existingVideo.thumbnailKey);
+      if (existingVideo?.thumbnailKey) {
+        await utApi.deleteFiles(existingVideo.thumbnailKey);
       }
 
-      if (existingVideo.previewKey) {
-        const res = await utApi.deleteFiles(existingVideo.previewKey);
+      if (existingVideo?.previewKey) {
+        await utApi.deleteFiles(existingVideo.previewKey);
       }
 
       await db

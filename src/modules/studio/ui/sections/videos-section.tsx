@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { InfiniteScroll } from "@/components/infinite-scroll";
 
-import { VideoThumbnail } from "@/modules/vidoes/ui/components/video-thumbnail";
+import { VideoThumbnail } from "@/modules/videos/ui/components/video-thumbnail";
 import { format } from "date-fns";
 import { Globe2Icon, LockIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";

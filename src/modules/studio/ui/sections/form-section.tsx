@@ -49,6 +49,7 @@ import {
   CopyIcon,
   Globe2Icon,
   ImagePlusIcon,
+  Loader2Icon,
   LockIcon,
   MoreVerticalIcon,
   RotateCcwIcon,
@@ -57,7 +58,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { THUMBNAIL_FALLBACK } from "@/modules/vidoes/constatns";
+import { THUMBNAIL_FALLBACK } from "@/modules/videos/constants";
 import { ThumbnailUploadModal } from "../components/thumbnail-upload-modal";
 
 interface FormSectionProps {
@@ -88,8 +89,19 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
 
   const update = useMutation(trpc.videos.update.mutationOptions());
   const remove = useMutation(trpc.videos.delete.mutationOptions());
-  const resotreThumbnail = useMutation(
+  const restoreThumbnail = useMutation(
     trpc.videos.restoreThumbnail.mutationOptions(),
+  );
+  const generateThumbnail = useMutation(
+    trpc.videos.generateThumbnail.mutationOptions(),
+  );
+
+  const generateTitle = useMutation(
+    trpc.videos.generateTitle.mutationOptions(),
+  );
+
+  const generateDescription = useMutation(
+    trpc.videos.generateDescription.mutationOptions(),
   );
 
   const { data: video } = useSuspenseQuery(
@@ -99,7 +111,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
     trpc.categories.getMany.queryOptions(),
   );
 
-  const fullURL = `${process.env.VERCEL_URL || "http://localhost:3000"}/vidoes/${video.video.id}`;
+  const fullURL = `${process.env.VERCEL_URL || "http://localhost:3000"}/videos/${video.video.id}`;
   const [isCopied, setIsCopied] = useState(false);
   async function onCopy() {
     await navigator.clipboard.writeText(fullURL);
@@ -116,63 +128,134 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
   });
 
   async function onSubmit(data: z.infer<typeof videoUpdateSchema>) {
-    const { success, data: vlaidData } = videoUpdateSchema.safeParse(data);
+    const { success, data: validData } = videoUpdateSchema.safeParse(data);
     if (!success) {
       toast.error("Invalid Fields..");
       return;
     }
 
-    await update.mutateAsync(vlaidData, {
+    update.mutate(validData, {
       onSuccess: () => {
-        toast.success("Video Updated Successfully");
+        toast.success("Video Updated");
         queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
         queryClient.invalidateQueries({
           queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
         });
 
-        // redirecting the user to the studio page
         router.push(`/studio`);
       },
       onError: (err) => {
         console.log("ERROR UPDATING VIDEO DETAILS: ", { error: err });
-        toast.error(`Error udpating vidoe details..`);
+        toast.error(`Error updating video details..`);
       },
     });
   }
 
   async function onDelete() {
-    await remove.mutateAsync(
+    remove.mutate(
       { id: videoId },
       {
         onSuccess: () => {
           router.push("/studio");
-          toast.success("Vidoe Deleted Successfully");
+          toast.success("Video Deleted");
           queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
           queryClient.invalidateQueries({
             queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
           });
         },
         onError: (err) => {
-          console.log("ERROR DELETING VIDOE", { error: err.message });
+          console.log("ERROR DELETING VIDEO", { error: err.message });
           toast.error("Error deleting video...");
         },
       },
     );
   }
 
-  async function onRestore() {
-    await resotreThumbnail.mutateAsync(
-      { id: videoId },
+  async function onGenerateThumbnail() {
+    generateThumbnail.mutate(
+      { videoId },
       {
         onSuccess: () => {
-          toast.success("Thumbail Restored");
+          toast.success("Background Job Started..", {
+            description: "This may take some time",
+            classNames: {
+              description: "text-xs text-muted-foreground",
+            },
+          });
           queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
           queryClient.invalidateQueries({
             queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
           });
         },
         onError: (err) => {
-          console.log("ERROR DELETING VIDOE", { error: err.message });
+          console.log("ERROR GENERATING THUMBNAIL: ", { error: err.message });
+          toast.error("Error generating thumbnail...");
+        },
+      },
+    );
+  }
+
+  async function onGenerateTitle() {
+    generateTitle.mutate(
+      { videoId },
+      {
+        onSuccess: () => {
+          toast.success("Background Job Started..", {
+            description: "This may take some time",
+            classNames: {
+              description: "text-xs text-gray-400",
+            },
+          });
+          queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+          queryClient.invalidateQueries({
+            queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+          });
+        },
+        onError: (err) => {
+          console.log("ERROR GENERATING TITLE: ", { error: err.message });
+          toast.error("Error generating title...");
+        },
+      },
+    );
+  }
+
+  async function onGenerateDescription() {
+    generateDescription.mutate(
+      { videoId },
+      {
+        onSuccess: () => {
+          toast.success("Background Job Started..", {
+            description: "This may take some time",
+            classNames: {
+              description: "text-xs text-gray-400",
+            },
+          });
+          queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+          queryClient.invalidateQueries({
+            queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+          });
+        },
+        onError: (err) => {
+          console.log("ERROR GENERATING DESCRIPTION: ", { error: err.message });
+          toast.error("Error generating description...");
+        },
+      },
+    );
+  }
+
+  async function onRestore() {
+    await restoreThumbnail.mutateAsync(
+      { id: videoId },
+      {
+        onSuccess: () => {
+          toast.success("Thumbnail Restored");
+          queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+          queryClient.invalidateQueries({
+            queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+          });
+        },
+        onError: (err) => {
+          console.log("ERROR DELETING THUMBNAIL", { error: err.message });
           toast.error("Error replacing video thumbnail...");
         },
       },
@@ -208,6 +291,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {/* Add proper disabling for buttons and dorpdown action items */}
                 <DropdownMenuItem
                   disabled={remove.isPending || update.isPending}
                   onClick={onDelete}>
@@ -226,7 +310,24 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>Titles</FieldLabel>
+                  <FieldLabel>
+                    <div className="flex items-center gap-x-2">
+                      Title
+                      <Button
+                        type="button"
+                        variant={"outline"}
+                        size={"icon"}
+                        aria-label="Generate with AI"
+                        onClick={onGenerateTitle}
+                        className="rounded-full size-6 [&_svg]:size-3!">
+                        {generateTitle.isPending ? (
+                          <Loader2Icon className="animate-spin" />
+                        ) : (
+                          <SparklesIcon />
+                        )}
+                      </Button>
+                    </div>
+                  </FieldLabel>
                   {/* TODO: Add AI generate button */}
 
                   <Input
@@ -247,8 +348,24 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>Description</FieldLabel>
-                  {/* TODO: Add AI generate button */}
+                  <FieldLabel>
+                    <div className="flex items-center gap-x-2">
+                      Description
+                      <Button
+                        type="button"
+                        variant={"outline"}
+                        size={"icon"}
+                        aria-label="Generate with AI"
+                        onClick={onGenerateDescription}
+                        className="rounded-full size-6 [&_svg]:size-3!">
+                        {generateDescription.isPending ? (
+                          <Loader2Icon className="animate-spin" />
+                        ) : (
+                          <SparklesIcon />
+                        )}
+                      </Button>
+                    </div>
+                  </FieldLabel>
 
                   <Textarea
                     {...field}
@@ -298,9 +415,9 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
                         <DropdownMenuItem
                           onClick={() => setThumbnailModalOpen(true)}>
                           <ImagePlusIcon className="mr-1 size-4" />
-                          Change
+                          Change on{" "}
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={onGenerateThumbnail}>
                           <SparklesIcon className="mr-1 size-4" />
                           AI Generated
                         </DropdownMenuItem>
