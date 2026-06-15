@@ -46,10 +46,10 @@ export const studioRouter = createTRPCRouter({
       const hasMore = data.length > limit;
 
       // Remove the last item From The Data (It wasn't meant for the user, it's for our ops to find out if there is more data. )
-      const itmes = hasMore ? data.slice(0, -1) : data;
+      const items = hasMore ? data.slice(0, -1) : data;
 
       // Set the cursor vlue to the last item's ID (look at the top` lt(videos.id, cursor.id)`)
-      const lastItem = itmes[itmes.length - 1];
+      const lastItem = items[items.length - 1];
       const nextCursor = hasMore
         ? {
             id: lastItem.id,
@@ -58,7 +58,7 @@ export const studioRouter = createTRPCRouter({
         : null;
 
       return {
-        itmes,
+        items,
         nextCursor,
       };
     }),
