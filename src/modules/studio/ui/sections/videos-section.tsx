@@ -122,7 +122,7 @@ function VideosSectionSuspense() {
 
             {!query.isFetching &&
               query.data?.pages
-                .flatMap((page) => page.itmes)
+                .flatMap((page) => page.items)
                 .map((item) => (
                   <TableRow key={item.id} className="cursor-pointer">
                     <TableCell>
@@ -137,12 +137,12 @@ function VideosSectionSuspense() {
                             />
                           </div>
 
-                          <div className="flex flex-col overflow-hidden gap-y-1">
-                            <span className="text-sm line-clamp-1">
+                          <div className="flex flex-col overflow-hidden gap-y-1 max-w-60">
+                            <span className="text-sm line-clamp-1 text-ellipsis">
                               {item.title}
                             </span>
-                            <span className="text-xs text-muted-foreground line-clamp-1">
-                              {item.description ?? "No Descriptoin"}
+                            <span className="text-xs text-muted-foreground line-clamp-1 text-ellipsis">
+                              {item.description ?? "No Description"}
                             </span>
                           </div>
                         </div>
