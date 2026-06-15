@@ -1,6 +1,6 @@
 "use client";
 
-import { THUMBNAIL_FALLBACK } from "@/modules/vidoes/constatns";
+import { THUMBNAIL_FALLBACK } from "@/modules/videos/constants";
 import MuxPlayer from "@mux/mux-player-react";
 
 interface VideoPlayerProps {
