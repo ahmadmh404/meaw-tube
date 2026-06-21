@@ -12,6 +12,8 @@ import { mux } from "@/lib/mux";
 import { db } from "@/db";
 import { videos } from "@/db/schema";
 import { UTApi } from "uploadthing/server";
+import { workflow } from "@/lib/workflow";
+import { ThumbnailAndPreviewCleanupDataType } from "../workflows/cleanup/route";
 
 type WebhookType =
   | VideoAssetCreatedWebhookEvent
@@ -142,12 +144,17 @@ export async function POST(req: Request) {
         .from(videos)
         .where(eq(videos.muxUploadId, deleteData.upload_id));
 
-      if (existingVideo?.thumbnailKey) {
-        await utApi.deleteFiles(existingVideo.thumbnailKey);
-      }
-
-      if (existingVideo?.previewKey) {
-        await utApi.deleteFiles(existingVideo.previewKey);
+      if (existingVideo?.thumbnailKey && existingVideo?.previewKey) {
+        workflow.trigger({
+          url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/cleanup`,
+          body: {
+            mode: "thumbnail_preview_cleanup",
+            data: {
+              thumbnailKey: existingVideo.thumbnailKey,
+              previewKey: existingVideo.previewKey,
+            },
+          } as ThumbnailAndPreviewCleanupDataType,
+        });
       }
 
       await db

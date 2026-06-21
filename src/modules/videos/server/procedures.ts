@@ -2,15 +2,52 @@ import z from "zod";
 import { db } from "@/db";
 import { mux } from "@/lib/mux";
 import { UTApi } from "uploadthing/server";
-import { videos, videoUpdateSchema } from "@/db/schema";
+import { users, videos, videoUpdateSchema } from "@/db/schema";
 
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import {
+  baseProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "@/trpc/init";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, getColumns } from "drizzle-orm";
 import { workflow } from "@/lib/workflow";
+import {
+  CleanupDaaType,
+  FullCleanupDataType,
+  ThumbnailCleanupDataType,
+} from "@/app/api/videos/workflows/cleanup/route";
 
 export const videosRouter = createTRPCRouter({
+  getOne: baseProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { id } = input;
+
+      const [existingVideo] = await db
+        // redefine the output
+        .select({
+          ...getColumns(videos),
+          user: {
+            ...getColumns(users),
+          },
+        })
+        .from(videos)
+        .where(eq(videos.id, id))
+        .innerJoin(users, eq(videos.userId, users.id));
+
+      if (!existingVideo) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      return existingVideo;
+    }),
+
   create: protectedProcedure.mutation(async ({ ctx }) => {
     const { id: userId } = ctx.user;
 
@@ -78,41 +115,30 @@ export const videosRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { id: userId } = ctx.user;
-      const { id: vidoeId } = input;
+      const { id: videoId } = input;
 
       const [deleted] = await db
         .delete(videos)
-        .where(and(eq(videos.id, vidoeId), eq(videos.userId, userId)))
+        .where(and(eq(videos.id, videoId), eq(videos.userId, userId)))
         .returning({
-          id: videos.id,
+          assetId: videos.muxAssetId,
           thumbnailKey: videos.thumbnailKey,
           previewKey: videos.previewKey,
         });
 
-      if (!deleted.id) {
+      if (!deleted.assetId) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      // Delete related uploadthing files.
-      const utApi = new UTApi();
-
-      if (deleted.thumbnailKey) {
-        await utApi.deleteFiles(deleted.thumbnailKey);
-      }
-
-      if (deleted.previewKey) {
-        await utApi.deleteFiles(deleted.previewKey);
-      }
-
-      // Delete the Mux Video File & It's info
-      // TODO: later use fetchClient instead
-      const response = await fetch(
-        `https://api.mux.com/video/v1/assets/${deleted.id}`,
-        { method: "DELETE" },
-      );
-
-      if (!response.ok) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // clean up assets
+      if (deleted.thumbnailKey && deleted.previewKey) {
+        workflow.trigger({
+          url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/cleanup`,
+          body: {
+            mode: "full_cleanup",
+            data: { ...deleted },
+          } as FullCleanupDataType,
+        });
       }
 
       return { deleted };
@@ -137,18 +163,6 @@ export const videosRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST" });
       }
 
-      if (existingVideo.thumbnailKey) {
-        const utApi = new UTApi();
-        const res = await utApi.deleteFiles(existingVideo.thumbnailKey);
-        await db
-          .update(videos)
-          .set({
-            thumbnailKey: null,
-            thumbnailUrl: null,
-          })
-          .where(and(eq(videos.id, input.id), eq(videos.userId, userId)));
-      }
-
       const utApi = new UTApi();
 
       const tempThumbnailURL = `https://image.mux.com/${existingVideo.muxPlaybackId}/thumbnail.jpg`;
@@ -171,6 +185,30 @@ export const videosRouter = createTRPCRouter({
         })
         .returning();
 
+      if (existingVideo.thumbnailKey) {
+        workflow.trigger({
+          url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/cleanup`,
+          body: {
+            mode: "thumbnail_cleanup",
+            data: {
+              thumbnailKey: existingVideo.thumbnailKey,
+            },
+          } as ThumbnailCleanupDataType,
+        });
+
+        // ============= Unnecessary Work! =============
+
+        // await db
+        //   .update(videos)
+        //   .set({
+        //     thumbnailKey: null,
+        //     thumbnailUrl: null,
+        //   })
+        //   .where(and(eq(videos.id, input.id), eq(videos.userId, userId)));
+
+        // ============= Unnecessary Work ! =============
+      }
+
       return updatedVideo;
     }),
 
@@ -187,6 +225,7 @@ export const videosRouter = createTRPCRouter({
 
       return workflowRunId;
     }),
+
   generateTitle: protectedProcedure
     .input(z.object({ videoId: z.string() }))
     .mutation(async ({ ctx, input }) => {
