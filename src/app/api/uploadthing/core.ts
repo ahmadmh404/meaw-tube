@@ -5,6 +5,8 @@ import { and, eq } from "drizzle-orm";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError, UTApi } from "uploadthing/server";
 import z from "zod";
+import { ThumbnailCleanupDataType } from "../videos/workflows/cleanup/route";
+import { workflow } from "@/lib/workflow";
 
 const f = createUploadthing();
 
@@ -41,15 +43,28 @@ export const ourFileRouter = {
       if (!existingVideo) throw new UploadThingError("Video No tFound");
 
       if (existingVideo.thumbnailKey) {
-        const utApi = new UTApi();
-        await utApi.deleteFiles(existingVideo.thumbnailKey);
-        await db
-          .update(videos)
-          .set({
-            thumbnailKey: null,
-            thumbnailUrl: null,
-          })
-          .where(and(eq(videos.id, input.videoId), eq(videos.userId, user.id)));
+        // TODO: replace with triggering the cleanup workflow
+        workflow.trigger({
+          url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/cleanup`,
+          body: {
+            mode: "thumbnail_cleanup",
+            data: {
+              thumbnailKey: existingVideo.thumbnailKey,
+            },
+          } as ThumbnailCleanupDataType,
+        });
+
+        //  ================ Unnecessary Work! ================
+
+        // await db
+        //   .update(videos)
+        //   .set({
+        //     thumbnailKey: null,
+        //     thumbnailUrl: null,
+        //   })
+        //   .where(and(eq(videos.id, input.videoId), eq(videos.userId, user.id)));
+
+        //  ================ Unnecessary Work! ================
       }
 
       return { user, ...input };

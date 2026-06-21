@@ -16,3 +16,9 @@ export const DESCRIPTION_SYSTEM_PROMPT = `Your task is to summarize the transcri
 - Aim for a summary that is 3-5 sentences long and no more than 200 characters.`;
 
 export const MINIMUM_THUMBNAIL_SVG_SIZE_BYTES = 135;
+
+export const CLEANUP_WORKFLOW_MODES = [
+  "thumbnail_cleanup",
+  "thumbnail_preview_cleanup",
+  "full_cleanup",
+] as const;

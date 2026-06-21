@@ -7,6 +7,8 @@ import { serve } from "@upstash/workflow/nextjs";
 
 import { ai } from "@/lib/gen-ai";
 import { MINIMUM_THUMBNAIL_SVG_SIZE_BYTES } from "@/modules/videos/constants";
+import { workflow } from "@/lib/workflow";
+import { ThumbnailCleanupDataType } from "../cleanup/route";
 
 interface InputType {
   userId: string;
@@ -92,10 +94,6 @@ export const { POST } = serve(async (context) => {
       throw new Error("Failed Uploading File...");
     }
 
-    if (video.thumbnailKey) {
-      await utApi.deleteFiles(video.thumbnailKey);
-    }
-
     await db
       .update(videos)
       .set({
@@ -105,6 +103,18 @@ export const { POST } = serve(async (context) => {
       .where(
         and(eq(videos.id, input.videoId), eq(videos.userId, input.userId)),
       );
+
+    if (video.thumbnailKey) {
+      workflow.trigger({
+        url: `${process.env.UPSTASH_WORKFLOW_URL}/api/videos/workflows/cleanup`,
+        body: {
+          mode: "thumbnail_cleanup",
+          data: {
+            thumbnailKey: video.thumbnailKey,
+          },
+        } as ThumbnailCleanupDataType,
+      });
+    }
 
     return { success: true };
   });

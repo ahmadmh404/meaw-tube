@@ -178,6 +178,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
 
   const fullURL = `${process.env.VERCEL_URL || "http://localhost:3000"}/videos/${video.video.id}`;
   const [isCopied, setIsCopied] = useState(false);
+
   async function onCopy() {
     await navigator.clipboard.writeText(fullURL);
     setIsCopied(true);
@@ -528,7 +529,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
                   <div className="flex flex-col gap-y-1">
                     <p className="text-xs text-muted-foreground">Video Link</p>
                     <div className="flex items-center gap-x-2">
-                      <Link href={`/vidoes/${video.video.id}`}>
+                      <Link href={`/videos/${video.video.id}`}>
                         <p className="line-clamp-1 text-sm text-blue-500">
                           {fullURL}
                         </p>
