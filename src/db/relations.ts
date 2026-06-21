@@ -14,6 +14,11 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.users.id,
       to: r.videoViews.userId,
     }),
+
+    videoReactions: r.many.videoReactions({
+      from: r.users.id,
+      to: r.videoReactions.userId,
+    }),
   },
 
   videos: {
@@ -32,6 +37,11 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.videos.id,
       to: r.videoViews.videoId,
     }),
+
+    reactions: r.many.videoReactions({
+      from: r.videos.id,
+      to: r.videoReactions.videoId,
+    }),
   },
 
   videoViews: {
@@ -42,6 +52,18 @@ export const relations = defineRelations(schema, (r) => ({
 
     video: r.one.videos({
       from: r.videoViews.videoId,
+      to: r.videos.id,
+    }),
+  },
+
+  videoReactions: {
+    viewer: r.one.users({
+      from: r.videoReactions.userId,
+      to: r.users.id,
+    }),
+
+    video: r.one.videos({
+      from: r.videoReactions.videoId,
       to: r.videos.id,
     }),
   },
