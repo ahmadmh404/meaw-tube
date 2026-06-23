@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { mux } from "@/lib/mux";
 import { UTApi } from "uploadthing/server";
 import {
+  subscriptions,
   users,
   videoReactions,
   videos,
@@ -17,7 +18,7 @@ import {
   protectedProcedure,
 } from "@/trpc/init";
 
-import { and, eq, getColumns, inArray } from "drizzle-orm";
+import { and, eq, getColumns, inArray, isNotNull } from "drizzle-orm";
 import { workflow } from "@/lib/workflow";
 import {
   FullCleanupDataType,
@@ -58,13 +59,27 @@ export const videosRouter = createTRPCRouter({
           .where(inArray(videoReactions.userId, user.id ? [user.id] : [])),
       );
 
+      const viewerSubscriptions = db.$with("viewer_subscriptions").as(
+        db
+          .select()
+          .from(subscriptions)
+          .where(inArray(subscriptions.viewerId, user ? [user.id] : [])),
+      );
+
       const [existingVideo] = await db
-        .with(viewerReactions)
+        .with(viewerReactions, viewerSubscriptions)
         // redefine the output
         .select({
           ...getColumns(videos),
           user: {
             ...getColumns(users),
+            subscriptionsCount: db.$count(
+              subscriptions,
+              eq(subscriptions.creatorId, users.id),
+            ),
+            isUserSubscribed: isNotNull(viewerSubscriptions.viewerId).mapWith(
+              Boolean,
+            ),
           },
           viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
           likeCount: db.$count(
@@ -85,8 +100,13 @@ export const videosRouter = createTRPCRouter({
         })
         .from(videos)
         .where(eq(videos.id, id))
+        // This inner join is for retrieving the creator information
+        .innerJoin(users, eq(videos.userId, users.id))
+        // This is for retrieving the viewer's reaction
         .leftJoin(viewerReactions, eq(videos.id, viewerReactions.videoId))
-        .innerJoin(users, eq(videos.userId, users.id));
+        // This is for retrieving the the current user (viewer) subscription status (and filter it more with the creator userId).
+        .leftJoin(viewerSubscriptions, eq(subscriptions.creatorId, users.id));
+
       // .groupBy(videos.id, videos.userId, viewerReactions.type);
 
       if (!existingVideo) {
