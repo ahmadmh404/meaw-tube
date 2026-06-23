@@ -15,7 +15,11 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 
-export const VideoVisibility = pgEnum("video_visiblity", ["public", "private"]);
+export const VideoVisibility = pgEnum("video_visibility", [
+  "public",
+  "private",
+]);
+
 export const reactionType = pgEnum("reaction_type", ["like", "dislike"]);
 
 export const users = pgTable(
@@ -127,3 +131,28 @@ export const videoReactions = pgTable(
 export const videoReactionsInsertSchema = createInsertSchema(videoReactions);
 export const videoReactionsUpdateSchema = createUpdateSchema(videoReactions);
 export const videoReactionsSelectSchema = createSelectSchema(videoReactions);
+
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    viewerId: uuid("viewer_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    creatorId: uuid("creator_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({
+      name: "subscription_pk",
+      columns: [t.viewerId, t.creatorId],
+    }),
+  ],
+);
+
+export const SubscriptionsInsertSchema = createInsertSchema(subscriptions);
+export const SubscriptionsUpdateSchema = createUpdateSchema(subscriptions);
+export const SubscriptionsSelectSchema = createSelectSchema(subscriptions);
