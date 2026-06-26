@@ -1,9 +1,9 @@
-import * as z from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
-import { ProtectedIntersection } from "@trpc/server/unstable-core-do-not-import";
 import { db } from "@/db";
-import { videoViews } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { videoViews } from "@/db/schema";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+
+import * as z from "zod";
 
 export const videoViewsRouter = createTRPCRouter({
   create: protectedProcedure

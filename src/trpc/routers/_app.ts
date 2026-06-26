@@ -6,10 +6,12 @@ import { categoriesRouter } from "@/modules/categories/server/procedures";
 import { videoViewsRouter } from "@/modules/videoViews/procedures";
 import { videoReactionsRouter } from "@/modules/videoReactions/procedures";
 import { subscriptionsRouter } from "@/modules/subscriptions/server/procedures";
+import { CommentsRouter } from "@/modules/comments/server/procedure";
 
 export const appRouter = createTRPCRouter({
-  videos: videosRouter,
   studio: studioRouter,
+  videos: videosRouter,
+  comments: CommentsRouter,
   videoViews: videoViewsRouter,
   categories: categoriesRouter,
   subscriptions: subscriptionsRouter,

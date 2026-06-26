@@ -33,6 +33,11 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.subscriptions.viewerId,
       alias: "subscriptions_viewer_id_fkey",
     }),
+
+    comments: r.many.comments({
+      from: r.users.id,
+      to: r.comments.userId,
+    }),
   },
 
   videos: {
@@ -55,6 +60,23 @@ export const relations = defineRelations(schema, (r) => ({
     reactions: r.many.videoReactions({
       from: r.videos.id,
       to: r.videoReactions.videoId,
+    }),
+
+    comments: r.many.comments({
+      from: r.videos.id,
+      to: r.comments.userId,
+    }),
+  },
+
+  comments: {
+    user: r.one.users({
+      from: r.comments.userId,
+      to: r.users.id,
+    }),
+
+    video: r.one.videos({
+      from: r.comments.videoId,
+      to: r.videos.id,
     }),
   },
 
@@ -83,13 +105,13 @@ export const relations = defineRelations(schema, (r) => ({
   },
 
   subscriptions: {
-    viewerId: r.one.users({
+    viewer: r.one.users({
       from: r.subscriptions.viewerId,
       to: r.users.id,
       alias: "subscriptions_viewer_id_fkey",
     }),
 
-    creatorId: r.one.users({
+    creator: r.one.users({
       from: r.subscriptions.creatorId,
       to: r.users.id,
       alias: "subscriptions_creator_id_fkey",
