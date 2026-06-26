@@ -1,4 +1,5 @@
 export const THUMBNAIL_FALLBACK = "/assets/placeholder.svg";
+export const USER_FALLBACK = "/assets/user-placeholder.svg";
 
 export const TITLE_SYSTEM_PROMPT = `Your task is to generate an SEO-focused title for a YouTube video based on its transcript. Please follow these guidelines:
 - Be concise but descriptive, using relevant keywords to improve discoverability.

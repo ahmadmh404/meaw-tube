@@ -11,6 +11,9 @@ async function Page({ params }: PageProps) {
   const { videoId } = await params;
   void prefetch(trpc.videos.getOne.queryOptions({ id: videoId }));
 
+  // TODO: Don't forget to change to infiniteQueryOptions and  prefetch infinite.
+  void prefetch(trpc.comments.getMany.queryOptions({ videoId }));
+
   return (
     <HydrateClient>
       <VideoView videoId={videoId} />

@@ -8,13 +8,16 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 
-import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import { cn } from "@/lib/utils";
-import { VideoPlayer } from "@/modules/studio/ui/components/video-player";
+import { useAuth } from "@clerk/nextjs";
+
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import {
+  VideoPlayer,
+  VideoPlayerSkeleton,
+} from "@/modules/studio/ui/components/video-player";
 import { VideBanner } from "../components/video-banner";
-import { VideoTopRow } from "../components/video-top-row";
-import { useAuth, useUser } from "@clerk/nextjs";
-import { toast } from "sonner";
+import { VideoTopRow, VideoTopRowSkeleton } from "../components/video-top-row";
 
 interface VideoViewProps {
   videoId: string;
@@ -22,7 +25,7 @@ interface VideoViewProps {
 
 export function VideoSection({ videoId }: VideoViewProps) {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<VideoSectionSkeleton />}>
       <ErrorBoundary errorComponent={undefined}>
         <VideoSectionSuspense videoId={videoId} />
       </ErrorBoundary>
@@ -77,6 +80,15 @@ export function VideoSectionSuspense({ videoId }: VideoViewProps) {
 
       <VideBanner status={video.muxStatus} />
       <VideoTopRow video={video} />
+    </>
+  );
+}
+
+function VideoSectionSkeleton() {
+  return (
+    <>
+      <VideoPlayerSkeleton />
+      <VideoTopRowSkeleton />
     </>
   );
 }

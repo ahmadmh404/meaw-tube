@@ -63,17 +63,17 @@ export const videosRouter = createTRPCRouter({
         db
           .select()
           .from(subscriptions)
-          .where(inArray(subscriptions.viewerId, user ? [user.id] : [])),
+          .where(inArray(subscriptions.viewerId, user.id ? [user.id] : [])),
       );
 
       const [existingVideo] = await db
-        .with(viewerReactions, viewerSubscriptions)
+        .with(viewerSubscriptions, viewerReactions)
         // redefine the output
         .select({
           ...getColumns(videos),
           user: {
             ...getColumns(users),
-            subscriptionsCount: db.$count(
+            subscribersCount: db.$count(
               subscriptions,
               eq(subscriptions.creatorId, users.id),
             ),
@@ -99,13 +99,16 @@ export const videosRouter = createTRPCRouter({
           viewerReaction: viewerReactions.type,
         })
         .from(videos)
-        .where(eq(videos.id, id))
         // This inner join is for retrieving the creator information
         .innerJoin(users, eq(videos.userId, users.id))
         // This is for retrieving the viewer's reaction
         .leftJoin(viewerReactions, eq(videos.id, viewerReactions.videoId))
         // This is for retrieving the the current user (viewer) subscription status (and filter it more with the creator userId).
-        .leftJoin(viewerSubscriptions, eq(subscriptions.creatorId, users.id));
+        .leftJoin(
+          viewerSubscriptions,
+          eq(viewerSubscriptions.creatorId, users.id),
+        )
+        .where(eq(videos.id, id));
 
       // .groupBy(videos.id, videos.userId, viewerReactions.type);
 

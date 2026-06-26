@@ -8,6 +8,7 @@ import { VideoGetOneOutput } from "../../types";
 import { VideoDescription } from "./video-description";
 
 import { format, formatDistanceToNow } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface VideoTopRowProps {
   video: VideoGetOneOutput;
@@ -52,6 +53,30 @@ export function VideoTopRow({ video }: VideoTopRowProps) {
         expandedDate={expandedDate}
         description={video.description}
       />
+    </div>
+  );
+}
+
+export function VideoTopRowSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 mt-4">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-6 w-4/6 md:min-w-2/5" />
+      </div>
+
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-3 w-[70%]">
+          <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+          <div className="flex flex-col gap-2 w-full">
+            <Skeleton className="h-5 w-4/5 md:min-w-2/6" />
+            <Skeleton className="h-5 w-3/5 md:min-w-1/5" />
+          </div>
+        </div>
+
+        <Skeleton className="h-9 w-2/6 md:w-1/6 rounded-full" />
+      </div>
+
+      <Skeleton className="h-30 w-full" />
     </div>
   );
 }
