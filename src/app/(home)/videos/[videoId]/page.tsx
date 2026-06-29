@@ -12,7 +12,9 @@ async function Page({ params }: PageProps) {
   void prefetch(trpc.videos.getOne.queryOptions({ id: videoId }));
 
   // TODO: Don't forget to change to infiniteQueryOptions and  prefetch infinite.
-  void prefetch(trpc.comments.getMany.queryOptions({ videoId }));
+  void prefetch(
+    trpc.comments.getMany.queryOptions({ videoId, cursor: null, limit: 5 }),
+  );
 
   return (
     <HydrateClient>

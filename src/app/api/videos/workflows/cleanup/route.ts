@@ -77,8 +77,6 @@ export const { POST } = serve(async (context) => {
         },
       );
 
-      console.log("Mux Deletion Response: ", { response });
-
       if (!response.ok) {
         throw new Error("Internal Server Error.");
       }

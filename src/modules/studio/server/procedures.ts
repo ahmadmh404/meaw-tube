@@ -21,14 +21,14 @@ export const studioRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { cursor, limit } = input;
-      const { id: usreId } = ctx.user;
+      const { id: userId } = ctx.user;
 
       const data = await db
         .select()
         .from(videos)
         .where(
           and(
-            eq(videos.userId, usreId),
+            eq(videos.userId, userId),
             cursor
               ? or(
                   lt(videos.updatedAt, cursor.updatedAt),
