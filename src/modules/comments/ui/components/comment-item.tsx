@@ -14,9 +14,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
-import { MessageSquareIcon, MoreVerticalIcon, Trash2Icon } from "lucide-react";
+import {
+  MessageSquareIcon,
+  MoreVerticalIcon,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 interface CommentItemProps {
   comment: CommentGetManyOutput;
@@ -29,15 +37,63 @@ export function CommentItem({ comment }: CommentItemProps) {
   const queryClient = useQueryClient();
   const remove = useMutation(trpc.comments.remove.mutationOptions());
 
+  const likeCount = useMemo(() => {
+    return Intl.NumberFormat("en", {
+      notation: "compact",
+    }).format(comment.likeCount);
+  }, []);
+
+  const dislikeCount = useMemo(() => {
+    return Intl.NumberFormat("en", {
+      notation: "compact",
+    }).format(comment.dislikeCount);
+  }, []);
+
+  const like = useMutation(
+    trpc.commentReactions.like.mutationOptions({
+      onSuccess() {
+        queryClient.invalidateQueries(
+          trpc.comments.getMany.queryFilter({ videoId: comment.videoId }),
+        );
+      },
+      onError(error) {
+        toast.error("Something went wrong");
+        if (error.data && error.data.code === "UNAUTHORIZED") {
+          clerk.openSignIn();
+        }
+      },
+    }),
+  );
+
+  const dislike = useMutation(
+    trpc.commentReactions.dislike.mutationOptions({
+      onSuccess() {
+        queryClient.invalidateQueries({
+          queryKey: trpc.comments.getMany.queryKey({
+            videoId: comment.videoId,
+          }),
+        });
+      },
+      onError(error) {
+        toast.error("Something went wrong");
+        if (error.data && error.data.code === "UNAUTHORIZED") {
+          clerk.openSignIn();
+        }
+      },
+    }),
+  );
+
   function onDelete() {
     remove.mutate(
-      { videoId: comment.videoId },
+      { commentId: comment.id },
       {
         onSuccess() {
           toast.success("Comment Removed");
-          queryClient.invalidateQueries(
-            trpc.comments.getMany.queryFilter({ videoId: comment.videoId }),
-          );
+          queryClient.invalidateQueries({
+            queryKey: trpc.comments.getMany.queryKey({
+              videoId: comment.videoId,
+            }),
+          });
         },
 
         onError(e) {
@@ -49,6 +105,12 @@ export function CommentItem({ comment }: CommentItemProps) {
       },
     );
   }
+
+  const isPending = like.isPending || dislike.isPending;
+
+  console.log({
+    reaction: comment.user.userReactions,
+  });
 
   return (
     <div>
@@ -73,7 +135,47 @@ export function CommentItem({ comment }: CommentItemProps) {
           </Link>
 
           <p className="text-sm">{comment.value}</p>
-          {/* TODO: Reactions */}
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center">
+              <Button
+                className="size-8"
+                size={"icon"}
+                variant={"ghost"}
+                disabled={isPending}
+                onClick={() =>
+                  like.mutate({
+                    commentId: comment.id,
+                  })
+                }>
+                <ThumbsUpIcon
+                  className={cn(
+                    comment.user.userReactions === "like" && "fill-black",
+                  )}
+                />
+              </Button>
+              <span className="text-xs text-muted-foreground">{likeCount}</span>
+
+              <Button
+                className="size-8"
+                size={"icon"}
+                variant={"ghost"}
+                disabled={isPending}
+                onClick={() =>
+                  dislike.mutate({
+                    commentId: comment.id,
+                  })
+                }>
+                <ThumbsDownIcon
+                  className={cn(
+                    comment.user.userReactions === "dislike" && "fill-black",
+                  )}
+                />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {dislikeCount}
+              </span>
+            </div>
+          </div>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
