@@ -20,13 +20,6 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.videoReactions.userId,
     }),
 
-    // creator fkey
-    subscribers: r.many.subscriptions({
-      from: r.users.id,
-      to: r.subscriptions.creatorId,
-      alias: "subscriptions_creator_id_fkey",
-    }),
-
     // viewer fkey
     subscriptions: r.many.subscriptions({
       from: r.users.id,
@@ -34,9 +27,21 @@ export const relations = defineRelations(schema, (r) => ({
       alias: "subscriptions_viewer_id_fkey",
     }),
 
+    // creator fkey
+    subscribers: r.many.subscriptions({
+      from: r.users.id,
+      to: r.subscriptions.creatorId,
+      alias: "subscriptions_creator_id_fkey",
+    }),
+
     comments: r.many.comments({
       from: r.users.id,
       to: r.comments.userId,
+    }),
+
+    commentReactions: r.many.commentReactions({
+      from: r.users.id,
+      to: r.commentReactions.userId,
     }),
   },
 
@@ -77,6 +82,23 @@ export const relations = defineRelations(schema, (r) => ({
     video: r.one.videos({
       from: r.comments.videoId,
       to: r.videos.id,
+    }),
+
+    reactions: r.many.commentReactions({
+      from: r.comments.id,
+      to: r.commentReactions.commentId,
+    }),
+  },
+
+  commentReactions: {
+    user: r.one.users({
+      from: r.commentReactions.userId,
+      to: r.users.id,
+    }),
+
+    comment: r.one.comments({
+      from: r.commentReactions.commentId,
+      to: r.comments.id,
     }),
   },
 

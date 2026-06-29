@@ -13,7 +13,10 @@ async function Page({ params }: PageProps) {
 
   // TODO: Don't forget to change to infiniteQueryOptions and  prefetch infinite.
   void prefetch(
-    trpc.comments.getMany.queryOptions({ videoId, cursor: null, limit: 5 }),
+    trpc.comments.getMany.infiniteQueryOptions(
+      { videoId, limit: 5 },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+    ),
   );
 
   return (

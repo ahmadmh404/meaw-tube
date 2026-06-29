@@ -1,13 +1,18 @@
 import * as z from "zod";
 
 import { db } from "@/db";
-import { and, count, desc, eq, getColumns, lt, or } from "drizzle-orm";
+import { and, count, desc, eq, getColumns, inArray, lt, or } from "drizzle-orm";
 import {
   baseProcedure,
   createTRPCRouter,
   protectedProcedure,
 } from "@/trpc/init";
-import { commentInsertSchema, comments, users } from "@/db/schema";
+import {
+  commentInsertSchema,
+  commentReactions,
+  comments,
+  users,
+} from "@/db/schema";
 import { TRPCError } from "@trpc/server/unstable-core-do-not-import";
 
 export const CommentsRouter = createTRPCRouter({
@@ -20,16 +25,13 @@ export const CommentsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id: userId } = ctx.user;
-      const validation = commentInsertSchema.safeParse({ ...input, userId });
-
-      if (!validation.success) {
-        throw new TRPCError({ code: "BAD_REQUEST" });
-      }
 
       const [createdComments] = await db
         .insert(comments)
         .values({
-          ...validation.data,
+          userId,
+          videoId: input.videoId,
+          value: input.value,
         })
         .returning();
 
@@ -39,7 +41,7 @@ export const CommentsRouter = createTRPCRouter({
   remove: protectedProcedure
     .input(
       z.object({
-        videoId: commentInsertSchema.shape.videoId,
+        commentId: z.uuid(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -48,7 +50,7 @@ export const CommentsRouter = createTRPCRouter({
       const [deletedComment] = await db
         .delete(comments)
         .where(
-          and(eq(comments.videoId, input.videoId), eq(comments.userId, userId)),
+          and(eq(comments.id, input.commentId), eq(comments.userId, userId)),
         )
         .returning();
 
@@ -74,15 +76,68 @@ export const CommentsRouter = createTRPCRouter({
         limit: z.number().min(1).max(100),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { clerkUserId } = ctx;
       const { videoId, cursor, limit } = input;
 
+      let userId: string;
+
+      // get the real user from the database
+      const [user] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(inArray(users.clerkId, clerkUserId ? [clerkUserId] : []));
+
+      if (user) {
+        userId = user.id;
+      }
+
+      const userReactions = db.$with("comment_user_reactions").as(
+        db
+          .select({
+            commentId: commentReactions.commentId,
+            type: commentReactions.type,
+          })
+          .from(commentReactions)
+          .where(inArray(commentReactions.userId, user.id ? [user.id] : [])),
+      );
+
+      // Total video comments count.
+      const VideoCommentsCount = db
+        .select({ value: count() })
+        .from(comments)
+        .where(eq(comments.videoId, videoId));
+
       const paginatedComments = db
+        .with(userReactions)
         .select({
           ...getColumns(comments),
-          user: users,
+          likeCount: db.$count(
+            commentReactions,
+            and(
+              eq(comments.id, commentReactions.commentId),
+              eq(commentReactions.type, "like"),
+            ),
+          ),
+
+          dislikeCount: db.$count(
+            commentReactions,
+            and(
+              eq(comments.id, commentReactions.commentId),
+              eq(commentReactions.type, "dislike"),
+            ),
+          ),
+
+          user: {
+            ...getColumns(users),
+            userReactions: userReactions.type,
+          },
         })
+
         .from(comments)
+
+        .innerJoin(users, eq(users.id, comments.userId))
+        .leftJoin(userReactions, eq(comments.id, userReactions.commentId))
         .where(
           and(
             eq(comments.videoId, videoId),
@@ -97,14 +152,8 @@ export const CommentsRouter = createTRPCRouter({
               : undefined,
           ),
         )
-        .innerJoin(users, eq(users.id, comments.userId))
         .orderBy(desc(comments.updatedAt))
         .limit(limit + 1);
-
-      const VideoCommentsCount = db
-        .select({ value: count() })
-        .from(comments)
-        .where(eq(comments.videoId, videoId));
 
       const [data, [{ value }]] = await db.batch([
         paginatedComments,
