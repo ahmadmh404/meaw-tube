@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 
-import { DEFAULT_LIMIT } from "@/constansts";
+import { DEFAULT_LIMIT } from "@/constants";
 import { useTRPC } from "@/trpc/trpc-client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
@@ -182,7 +182,7 @@ function VideosSectionSuspense() {
       <InfiniteScroll
         hasNextPage={query.hasNextPage}
         isFetchingNextPage={query.isFetchingNextPage}
-        fetchNextpage={query.fetchNextPage}
+        fetchNextPage={query.fetchNextPage}
       />
     </div>
   );
