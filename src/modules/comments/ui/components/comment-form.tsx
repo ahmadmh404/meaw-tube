@@ -15,17 +15,27 @@ import { Field, FieldError } from "@/components/ui/field";
 
 interface CommentFormProps {
   videoId: string;
+  variant?: "reply" | "comment";
+  parentId?: string;
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 const CommentFormSchema = commentInsertSchema.pick({
   value: true,
   videoId: true,
+  parentId: true,
 });
 
 type CommentFormSchemaType = z.infer<typeof CommentFormSchema>;
 
-export function CommentForm({ videoId, onSuccess }: CommentFormProps) {
+export function CommentForm({
+  videoId,
+  variant,
+  parentId,
+  onCancel,
+  onSuccess,
+}: CommentFormProps) {
   const clerk = useClerk();
 
   const trpc = useTRPC();
@@ -35,15 +45,55 @@ export function CommentForm({ videoId, onSuccess }: CommentFormProps) {
   const form = useForm<CommentFormSchemaType>({
     resolver: zodResolver(CommentFormSchema),
     defaultValues: {
-      videoId: videoId,
+      parentId,
+      videoId,
       value: "",
     },
   });
 
-  const create = useMutation(trpc.comments.create.mutationOptions());
+  const create = useMutation(
+    trpc.comments.create.mutationOptions({
+      onSuccess() {
+        form.reset();
+
+        // revalidate the comments
+        queryClient.invalidateQueries({
+          queryKey: trpc.comments.getMany.queryKey({ videoId }),
+        });
+
+        // revalidate replies
+        queryClient.invalidateQueries({
+          queryKey: trpc.comments.getMany.queryKey({ videoId, parentId }),
+        });
+
+        // Outside Work
+        if (onSuccess) {
+          onSuccess();
+        }
+      },
+
+      onError(error) {
+        if (error.data && error.data.code === "UNAUTHORIZED") {
+          clerk.openSignIn();
+        }
+
+        console.log("comment_form_error: ", error.message);
+        toast.error("Something went wrong");
+      },
+    }),
+  );
+
+  function handleCancel() {
+    form.reset();
+    if (onCancel) onCancel();
+  }
 
   function onSubmit(data: CommentFormSchemaType) {
-    const validation = CommentFormSchema.safeParse(data);
+    const validation = CommentFormSchema.safeParse({
+      ...data,
+      videoId,
+      parentId,
+    });
 
     // TODO: figure out a way to add this length protector.
     if (!validation.success || validation.data.value.length < 3) {
@@ -51,33 +101,11 @@ export function CommentForm({ videoId, onSuccess }: CommentFormProps) {
       return;
     }
 
-    create.mutate(
-      { videoId: data.videoId, value: data.value },
-      {
-        onSuccess() {
-          form.reset();
-
-          // revalidate the comments
-          queryClient.invalidateQueries(
-            trpc.comments.getMany.queryFilter({ videoId }),
-          );
-
-          // Outside Work
-          if (onSuccess) {
-            onSuccess();
-          }
-        },
-
-        onError(error) {
-          if (error.data && error.data.code === "UNAUTHORIZED") {
-            clerk.openSignIn();
-          }
-
-          console.log("comment_form_error: ", error.message);
-          toast.error("Something went wrong");
-        },
-      },
-    );
+    create.mutate({
+      videoId: data.videoId,
+      value: data.value,
+      parentId: data.parentId,
+    });
   }
 
   return (
@@ -87,7 +115,7 @@ export function CommentForm({ videoId, onSuccess }: CommentFormProps) {
         name={user?.fullName ?? "User"}
       />
 
-      <div className="flex-1">
+      <div className="w-full">
         <div>
           <Controller
             control={form.control}
@@ -96,9 +124,11 @@ export function CommentForm({ videoId, onSuccess }: CommentFormProps) {
               <Field>
                 <Textarea
                   {...field}
-                  placeholder="Add a comment"
                   aria-disabled={fieldState.invalid}
                   className="resize-none bg-transparent overflow-hidden min-h-0"
+                  placeholder={
+                    variant ? "Reply to this comment" : "Add a comment"
+                  }
                 />
 
                 {fieldState.invalid && (
@@ -110,8 +140,13 @@ export function CommentForm({ videoId, onSuccess }: CommentFormProps) {
         </div>
 
         <div className="justify-end gap-2 mt-2 flex">
+          {variant === "reply" && (
+            <Button variant={"ghost"} type="button" onClick={handleCancel}>
+              Cancel
+            </Button>
+          )}
           <Button type="submit" size={"sm"} disabled={create.isPending}>
-            Comment
+            {variant === "comment" ? "Comment" : "Reply"}
           </Button>
         </div>
       </div>

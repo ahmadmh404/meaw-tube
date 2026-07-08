@@ -44,7 +44,7 @@ export const videosRouter = createTRPCRouter({
         .from(users)
         .where(inArray(users.clerkId, clerkUserId ? [clerkUserId] : []));
 
-      if (user) {
+      if (user && user.id) {
         userId = user.id;
       }
 
@@ -56,14 +56,14 @@ export const videosRouter = createTRPCRouter({
             type: videoReactions.type,
           })
           .from(videoReactions)
-          .where(inArray(videoReactions.userId, user.id ? [user.id] : [])),
+          .where(inArray(videoReactions.userId, user ? [user.id] : [])),
       );
 
       const viewerSubscriptions = db.$with("viewer_subscriptions").as(
         db
           .select()
           .from(subscriptions)
-          .where(inArray(subscriptions.viewerId, user.id ? [user.id] : [])),
+          .where(inArray(subscriptions.viewerId, user ? [user.id] : [])),
       );
 
       const [existingVideo] = await db

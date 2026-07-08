@@ -41,7 +41,7 @@ export function CommentsSectionSuspense({ videoId }: CommentsSectionProps) {
   const commentsCount = query.data.pages.at(0)?.count ?? 0;
 
   console.log({
-    comments,
+    replies: comments,
   });
 
   return (
