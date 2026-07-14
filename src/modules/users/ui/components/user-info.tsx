@@ -35,7 +35,7 @@ export function UserInfo({ name, className, size }: UserInfoProps) {
             {name}
           </p>
         </TooltipTrigger>
-        <TooltipContent className="text-black/80" align="center">
+        <TooltipContent className="bg-black/70" align="center">
           <p>{name}</p>
         </TooltipContent>
       </Tooltip>

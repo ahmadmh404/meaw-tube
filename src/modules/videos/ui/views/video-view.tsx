@@ -13,12 +13,15 @@ export function VideoView({ videoId }: VideoViewProps) {
         <div className="flex-1 min-w-0">
           <VideoSection videoId={videoId} />
           <div className="xl:hidden block mt-4 ">
-            <SuggestionsSection />
+            {/* On mobile we will add the manual option to load more suggestions,
+             because if there is a lot of suggestions the user will
+              struggle reaching the comment if auto fetch would happen */}
+            <SuggestionsSection videoId={videoId} isManual />
           </div>
           <CommentsSection videoId={videoId} />
         </div>
         <div className="hidden xl:block w-full xl:w-77 2xl:w-115 shrink">
-          <SuggestionsSection />
+          <SuggestionsSection videoId={videoId} />
         </div>
       </div>
     </div>

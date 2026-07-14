@@ -16,8 +16,6 @@ export function VideoThumbnail({
   thumbnailUrl,
   previewUrl,
 }: VideoThumbnailProps) {
-  console.log("VIDEO DURATION: ", previewUrl);
-
   return (
     <div className="relative group">
       {/* Thumbnail Wrapper */}
