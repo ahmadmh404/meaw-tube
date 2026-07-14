@@ -140,11 +140,13 @@ export const videosRouter = createTRPCRouter({
       cors_origin: "*",
     });
 
+    const tempTitle = `Untitled_${crypto.randomUUID()}`;
+
     const [video] = await db
       .insert(videos)
       .values({
         userId,
-        title: "Untitled_00",
+        title: tempTitle,
         muxStatus: "waiting",
         muxUploadId: upload.id,
       })

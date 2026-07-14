@@ -23,6 +23,8 @@ export const studioRouter = createTRPCRouter({
       const { cursor, limit } = input;
       const { id: userId } = ctx.user;
 
+      console.log({ userId });
+
       const data = await db
         .select()
         .from(videos)

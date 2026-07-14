@@ -64,6 +64,10 @@ function VideosSectionSuspense() {
     ),
   );
 
+  const videos = query.data?.pages.flatMap((page) => page.items) ?? [];
+
+  console.log({ videos });
+
   return (
     <div className="px-4">
       <div className="border rounded-lg">
@@ -121,60 +125,58 @@ function VideosSectionSuspense() {
               ))}
 
             {!query.isFetching &&
-              query.data?.pages
-                .flatMap((page) => page.items)
-                .map((item) => (
-                  <TableRow key={item.id} className="cursor-pointer">
-                    <TableCell>
-                      <Link href={`/studio/videos/${item.id}`}>
-                        <div className="flex items-center gap-4 ">
-                          <div className="relative aspect-video w-36 shrink-0">
-                            <VideoThumbnail
-                              title={item.title}
-                              duration={item.duration ?? 0}
-                              thumbnailUrl={item.thumbnailUrl}
-                              previewUrl={item.previewUrl}
-                            />
-                          </div>
-
-                          <div className="flex flex-col overflow-hidden gap-y-1 max-w-60">
-                            <span className="text-sm line-clamp-1 text-ellipsis">
-                              {item.title}
-                            </span>
-                            <span className="text-xs text-muted-foreground line-clamp-1 text-ellipsis">
-                              {item.description ?? "No Description"}
-                            </span>
-                          </div>
+              videos.map((item) => (
+                <TableRow key={item.id} className="cursor-pointer">
+                  <TableCell>
+                    <Link href={`/studio/videos/${item.id}`}>
+                      <div className="flex items-center gap-4">
+                        <div className="relative aspect-video w-36 shrink-0">
+                          <VideoThumbnail
+                            title={item.title}
+                            duration={item.duration ?? 0}
+                            thumbnailUrl={item.thumbnailUrl}
+                            previewUrl={item.previewUrl}
+                          />
                         </div>
-                      </Link>
-                    </TableCell>
 
-                    <TableCell>
-                      <div className="flex items-center capitalize">
-                        {item.visibility === "private" ? (
-                          <LockIcon className="size-4 mr-2" />
-                        ) : (
-                          <Globe2Icon className="size-4 mr-2" />
-                        )}
-                        {item.visibility}
+                        <div className="flex flex-col overflow-hidden gap-y-1 max-w-60">
+                          <span className="text-sm line-clamp-1 text-ellipsis">
+                            {item.title}
+                          </span>
+                          <span className="text-xs text-muted-foreground line-clamp-1 text-ellipsis">
+                            {item.description ?? "No Description"}
+                          </span>
+                        </div>
                       </div>
-                    </TableCell>
+                    </Link>
+                  </TableCell>
 
-                    <TableCell>
-                      <div className="flex items-center capitalize">
-                        {item.muxStatus}
-                      </div>
-                    </TableCell>
+                  <TableCell>
+                    <div className="flex items-center capitalize">
+                      {item.visibility === "private" ? (
+                        <LockIcon className="size-4 mr-2" />
+                      ) : (
+                        <Globe2Icon className="size-4 mr-2" />
+                      )}
+                      {item.visibility}
+                    </div>
+                  </TableCell>
 
-                    <TableCell className="text-sm truncate">
-                      {format(item.createdAt, "d MMM yyyy")}
-                    </TableCell>
+                  <TableCell>
+                    <div className="flex items-center capitalize">
+                      {item.muxStatus}
+                    </div>
+                  </TableCell>
 
-                    <TableCell className="text-right">Views</TableCell>
-                    <TableCell className="text-right">Comments</TableCell>
-                    <TableCell className="text-right pr-6">Likes</TableCell>
-                  </TableRow>
-                ))}
+                  <TableCell className="text-sm truncate">
+                    {format(item.createdAt, "d MMM yyyy")}
+                  </TableCell>
+
+                  <TableCell className="text-right">Views</TableCell>
+                  <TableCell className="text-right">Comments</TableCell>
+                  <TableCell className="text-right pr-6">Likes</TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>

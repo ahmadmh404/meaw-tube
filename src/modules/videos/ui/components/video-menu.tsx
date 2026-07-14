@@ -21,7 +21,11 @@ interface VideoMenuProps {
   onRemove?: () => void;
 }
 
-export function VideoMenu({ videoId, variant, onRemove }: VideoMenuProps) {
+export function VideoMenu({
+  videoId,
+  onRemove,
+  variant = "ghost",
+}: VideoMenuProps) {
   // TODO: Implement What's left
 
   const fullURL = `${process.env.VERCEL_URL || "http://localhost:3000"}/videos/${videoId}`;

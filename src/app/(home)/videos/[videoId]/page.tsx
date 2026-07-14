@@ -19,6 +19,13 @@ async function Page({ params }: PageProps) {
     ),
   );
 
+  void prefetch(
+    trpc.suggestions.getMany.infiniteQueryOptions(
+      { videoId, limit: 5 },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+    ),
+  );
+
   return (
     <HydrateClient>
       <VideoView videoId={videoId} />

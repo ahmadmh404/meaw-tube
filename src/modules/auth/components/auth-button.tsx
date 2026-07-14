@@ -14,8 +14,7 @@ export function AuthButton() {
         <SignInButton mode="modal">
           <Button
             variant={"outline"}
-            className="px-4 py-2 text-sm font-medium text-blue-700 hover:text-blue-500 border-blue-500/20 rounded-full shadow-none"
-          >
+            className="px-4 py-2 text-sm font-medium text-blue-700 hover:text-blue-500 border-blue-500/20 rounded-full shadow-none">
             <UserCircleIcon className="" />
             Sign In
           </Button>
@@ -23,7 +22,7 @@ export function AuthButton() {
       )}
 
       {/* TODO: Add Menu Items for Stbunudio and user profile */}
-      {isSignedIn &&
+      {isSignedIn && (
         <UserButton>
           {/* TODO: Add User Button */}
           <UserButton.MenuItems>
@@ -33,7 +32,8 @@ export function AuthButton() {
               labelIcon={<ClapperboardIcon className="size-4" />}
             />
           </UserButton.MenuItems>
-        </UserButton>}
+        </UserButton>
+      )}
     </>
   );
 }
