@@ -53,6 +53,7 @@ import {
   LockIcon,
   MoreVerticalIcon,
   RotateCcwIcon,
+  RotateCwIcon,
   Sparkles,
   SparklesIcon,
   TrashIcon,
@@ -62,6 +63,7 @@ import { THUMBNAIL_FALLBACK } from "@/modules/videos/constants";
 import { ThumbnailUploadModal } from "../components/thumbnail-upload-modal";
 import { ThumbnailGenerateModal } from "../components/thumbnail-generate-modal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { APP_URL } from "@/constants";
 
 interface FormSectionProps {
   videoId: string;
@@ -152,21 +154,117 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
   const [thumbnailGenerateModalOpen, setThumbnailGenerateModalOpen] =
     useState(false);
 
-  const update = useMutation(trpc.videos.update.mutationOptions());
-  const remove = useMutation(trpc.videos.delete.mutationOptions());
-  const restoreThumbnail = useMutation(
-    trpc.videos.restoreThumbnail.mutationOptions(),
+  const update = useMutation(
+    trpc.videos.update.mutationOptions({
+      onSuccess: () => {
+        toast.success("Video Updated");
+        queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+        queryClient.invalidateQueries({
+          queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+        });
+
+        router.push(`/studio`);
+      },
+      onError: (err) => {
+        console.log("ERROR UPDATING VIDEO DETAILS: ", { error: err });
+        toast.error(`Error updating video details..`);
+      },
+    }),
   );
+
+  const remove = useMutation(
+    trpc.videos.delete.mutationOptions({
+      onSuccess: () => {
+        router.push("/studio");
+        toast.success("Video Deleted");
+        queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+        queryClient.invalidateQueries({
+          queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+        });
+      },
+      onError: (err) => {
+        console.log("ERROR DELETING VIDEO", { error: err.message });
+        toast.error("Error deleting video...");
+      },
+    }),
+  );
+
+  const restoreThumbnail = useMutation(
+    trpc.videos.restoreThumbnail.mutationOptions({
+      onSuccess: () => {
+        toast.success("Thumbnail Restored");
+        queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+        queryClient.invalidateQueries({
+          queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+        });
+      },
+      onError: (err) => {
+        console.log("ERROR DELETING THUMBNAIL", { error: err.message });
+        toast.error("Error replacing video thumbnail...");
+      },
+    }),
+  );
+
+  const revalidate = useMutation(
+    trpc.videos.revalidate.mutationOptions({
+      onSuccess: () => {
+        toast.success("Video Revalidated");
+        queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+        queryClient.invalidateQueries({
+          queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+        });
+      },
+      onError: (err) => {
+        console.log("ERROR REVALIDATING VIDEO DETAILS: ", { error: err });
+        toast.error(`Error revalidating video details..`);
+      },
+    }),
+  );
+
   const generateThumbnail = useMutation(
     trpc.videos.generateThumbnail.mutationOptions(),
   );
 
   const generateTitle = useMutation(
-    trpc.videos.generateTitle.mutationOptions(),
+    trpc.videos.generateTitle.mutationOptions({
+      onSuccess: () => {
+        toast.success("Background Job Started..", {
+          description: "This may take some time",
+          classNames: {
+            description: "text-xs text-gray-400",
+          },
+        });
+        queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+        queryClient.invalidateQueries({
+          queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+        });
+      },
+      onError: (err) => {
+        console.log("ERROR GENERATING TITLE: ", { error: err.message });
+        toast.error("Error generating title...");
+      },
+    }),
   );
 
   const generateDescription = useMutation(
-    trpc.videos.generateDescription.mutationOptions(),
+    trpc.videos.generateDescription.mutationOptions({
+      onSuccess: () => {
+        toast.success("Background Job Started..", {
+          description: "This may take some time",
+          classNames: {
+            description: "text-xs text-gray-400",
+          },
+        });
+        queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
+        queryClient.invalidateQueries({
+          queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
+        });
+      },
+      onError: (err) => {
+        console.log("ERROR GENERATING DESCRIPTION: ", { error: err.message });
+        toast.error("Error generating description...");
+      },
+    }),
   );
 
   const { data: video } = useSuspenseQuery(
@@ -176,7 +274,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
     trpc.categories.getMany.queryOptions(),
   );
 
-  const fullURL = `${process.env.VERCEL_URL || "http://localhost:3000"}/videos/${video.video.id}`;
+  const fullURL = `${APP_URL || "http://localhost:3000"}/videos/${video.video.id}`;
   const [isCopied, setIsCopied] = useState(false);
 
   async function onCopy() {
@@ -200,108 +298,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
       return;
     }
 
-    update.mutate(validData, {
-      onSuccess: () => {
-        toast.success("Video Updated");
-        queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
-        queryClient.invalidateQueries({
-          queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
-        });
-
-        router.push(`/studio`);
-      },
-      onError: (err) => {
-        console.log("ERROR UPDATING VIDEO DETAILS: ", { error: err });
-        toast.error(`Error updating video details..`);
-      },
-    });
-  }
-
-  async function onDelete() {
-    remove.mutate(
-      { id: videoId },
-      {
-        onSuccess: () => {
-          router.push("/studio");
-          toast.success("Video Deleted");
-          queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
-          queryClient.invalidateQueries({
-            queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
-          });
-        },
-        onError: (err) => {
-          console.log("ERROR DELETING VIDEO", { error: err.message });
-          toast.error("Error deleting video...");
-        },
-      },
-    );
-  }
-
-  async function onGenerateTitle() {
-    generateTitle.mutate(
-      { videoId },
-      {
-        onSuccess: () => {
-          toast.success("Background Job Started..", {
-            description: "This may take some time",
-            classNames: {
-              description: "text-xs text-gray-400",
-            },
-          });
-          queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
-          queryClient.invalidateQueries({
-            queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
-          });
-        },
-        onError: (err) => {
-          console.log("ERROR GENERATING TITLE: ", { error: err.message });
-          toast.error("Error generating title...");
-        },
-      },
-    );
-  }
-
-  async function onGenerateDescription() {
-    generateDescription.mutate(
-      { videoId },
-      {
-        onSuccess: () => {
-          toast.success("Background Job Started..", {
-            description: "This may take some time",
-            classNames: {
-              description: "text-xs text-gray-400",
-            },
-          });
-          queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
-          queryClient.invalidateQueries({
-            queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
-          });
-        },
-        onError: (err) => {
-          console.log("ERROR GENERATING DESCRIPTION: ", { error: err.message });
-          toast.error("Error generating description...");
-        },
-      },
-    );
-  }
-
-  async function onRestore() {
-    await restoreThumbnail.mutateAsync(
-      { id: videoId },
-      {
-        onSuccess: () => {
-          toast.success("Thumbnail Restored");
-          queryClient.invalidateQueries(trpc.studio.getMany.pathFilter());
-          queryClient.invalidateQueries({
-            queryKey: trpc.studio.getOne.queryKey({ id: videoId }),
-          });
-        },
-        onError: (err) => {
-          console.log("ERROR DELETING THUMBNAIL", { error: err.message });
-          toast.error("Error replacing video thumbnail...");
-        },
-      },
-    );
+    update.mutate(validData);
   }
 
   return (
@@ -339,10 +336,16 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  disabled={remove.isPending || update.isPending}
+                  onClick={() => revalidate.mutate({ id: videoId })}>
+                  <RotateCwIcon className="size-4 mr-2" />
+                  Refresh
+                </DropdownMenuItem>
                 {/* Add proper disabling for buttons and dorpdown action items */}
                 <DropdownMenuItem
                   disabled={remove.isPending || update.isPending}
-                  onClick={onDelete}>
+                  onClick={() => remove.mutate({ id: videoId })}>
                   <TrashIcon className="size-4 mr-2" />
                   Delete
                 </DropdownMenuItem>
@@ -366,7 +369,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
                         variant={"outline"}
                         size={"icon"}
                         aria-label="Generate with AI"
-                        onClick={onGenerateTitle}
+                        onClick={() => generateTitle.mutate({ videoId })}
                         className="rounded-full size-6 [&_svg]:size-3!">
                         {generateTitle.isPending ? (
                           <Loader2Icon className="animate-spin" />
@@ -376,8 +379,8 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
                       </Button>
                     </div>
                   </FieldLabel>
-                  {/* TODO: Add AI generate button */}
 
+                  {/* TODO: Add AI generate button */}
                   <Input
                     {...field}
                     placeholder="Add a title to you video"
@@ -404,7 +407,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
                         variant={"outline"}
                         size={"icon"}
                         aria-label="Generate with AI"
-                        onClick={onGenerateDescription}
+                        onClick={() => generateDescription.mutate({ videoId })}
                         className="rounded-full size-6 [&_svg]:size-3!">
                         {generateDescription.isPending ? (
                           <Loader2Icon className="animate-spin" />
@@ -434,7 +437,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
             <Controller
               name="thumbnailUrl"
               control={form.control}
-              render={({ field, fieldState }) => (
+              render={({}) => (
                 <Field>
                   <FieldLabel>Thumbnail</FieldLabel>
 
@@ -470,7 +473,10 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
                           <SparklesIcon className="mr-1 size-4" />
                           AI Generated
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={onRestore}>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            restoreThumbnail.mutate({ id: videoId })
+                          }>
                           <RotateCcwIcon className="mr-1 size-4" />
                           Restored
                         </DropdownMenuItem>

@@ -3,10 +3,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { APP_URL } from "@/constants";
 import {
   ListPlusIcon,
   MoreVerticalIcon,
@@ -16,8 +15,8 @@ import {
 import { useState } from "react";
 
 interface VideoMenuProps {
-  videoId: string;
   variant?: "ghost" | "secondary";
+  videoId: string;
   onRemove?: () => void;
 }
 
@@ -26,9 +25,7 @@ export function VideoMenu({
   onRemove,
   variant = "ghost",
 }: VideoMenuProps) {
-  // TODO: Implement What's left
-
-  const fullURL = `${process.env.VERCEL_URL || "http://localhost:3000"}/videos/${videoId}`;
+  const fullURL = `${APP_URL || "http://localhost:3000"}/videos/${videoId}`;
   const [isCopied, setIsCopied] = useState(false);
 
   async function onShare() {
@@ -48,7 +45,7 @@ export function VideoMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenuItem>
+        <DropdownMenuItem disabled={isCopied}>
           <ShareIcon onClick={onShare} className="mr-2 size-4" />
           Shared
         </DropdownMenuItem>
