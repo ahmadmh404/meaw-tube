@@ -3,14 +3,13 @@ import { users, videoReactions, videos, videoViews } from "@/db/schema";
 import { baseProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 
-import { eq, and, or, lt, desc, getColumns, not } from "drizzle-orm";
+import { eq, and, or, lt, desc, ilike, getColumns } from "drizzle-orm";
 import { z } from "zod";
 
-export const suggestionsRouter = createTRPCRouter({
+export const searchRouter = createTRPCRouter({
   getMany: baseProcedure
     .input(
       z.object({
-        videoId: z.uuid(),
         cursor: z
           .object({
             id: z.uuid(),
@@ -18,22 +17,12 @@ export const suggestionsRouter = createTRPCRouter({
           })
           .nullish(),
         limit: z.number().min(1).max(100),
+        query: z.nullish(z.string().min(1)),
+        categoryId: z.optional(z.string().min(1)),
       }),
     )
-    .query(async ({ input }) => {
-      const { videoId, cursor, limit } = input;
-
-      const [existingVideo] = await db
-        .select({
-          id: videos.id,
-          categoryId: videos.categoryId,
-        })
-        .from(videos)
-        .where(eq(videos.id, videoId));
-
-      if (!existingVideo) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
+    .query(async ({ ctx, input }) => {
+      const { cursor, limit, query, categoryId } = input;
 
       const data = await db
         .select({
@@ -60,12 +49,12 @@ export const suggestionsRouter = createTRPCRouter({
         .innerJoin(users, eq(videos.userId, users.id))
         .where(
           and(
-            existingVideo.categoryId
-              ? eq(videos.categoryId, existingVideo.categoryId)
-              : undefined,
+            ilike(videos.title, `%${query}%`),
+            categoryId ? eq(videos.categoryId, categoryId) : undefined,
 
-            not(eq(videos.id, existingVideo.id)),
+            // Very important.
             eq(videos.visibility, "public"),
+            eq(videos.muxStatus, "ready"),
             cursor
               ? or(
                   lt(videos.updatedAt, cursor.updatedAt),

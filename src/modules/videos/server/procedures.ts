@@ -217,6 +217,57 @@ export const videosRouter = createTRPCRouter({
       return { deleted };
     }),
 
+  revalidate: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.user;
+      const { id: videoId } = input;
+
+      const [existingVideo] = await db
+        .select({ id: videos.id, muxUploadId: videos.muxUploadId })
+        .from(videos)
+        .where(and(eq(videos.userId, userId), eq(videos.id, videoId)));
+
+      if (!existingVideo) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      if (!existingVideo.muxUploadId) {
+        throw new TRPCError({ code: "BAD_REQUEST" });
+      }
+
+      const upload = await mux.video.uploads.retrieve(
+        existingVideo.muxUploadId,
+      );
+
+      if (!upload || !upload.asset_id) {
+        throw new TRPCError({ code: "BAD_REQUEST" });
+      }
+
+      const asset = await mux.video.assets.retrieve(upload.asset_id);
+
+      if (!asset) {
+        throw new TRPCError({ code: "BAD_REQUEST" });
+      }
+
+      // TODO: Revalidate The Track ID and Track Status
+
+      const playBackId = asset.playback_ids?.[0].id;
+      const duration = asset?.duration ? Math.round(asset.duration * 1000) : 0;
+
+      const [updatedVideo] = await db
+        .update(videos)
+        .set({
+          muxStatus: asset.status,
+          muxPlaybackId: playBackId,
+          duration,
+        })
+        .where(eq(videos.id, existingVideo.id))
+        .returning();
+
+      return updatedVideo;
+    }),
+
   restoreThumbnail: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {

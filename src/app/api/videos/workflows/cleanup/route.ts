@@ -66,6 +66,7 @@ export const { POST } = serve(async (context) => {
         `${tokenId}:${tokenSecret}`,
       ).toString("base64");
 
+      // TODO: Use `mux` instance to delete the video.
       const response = await fetch(
         `https://api.mux.com/video/v1/assets/${input.data.assetId}`,
         {
