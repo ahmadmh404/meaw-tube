@@ -40,10 +40,6 @@ export function CommentsSectionSuspense({ videoId }: CommentsSectionProps) {
   const comments = query.data.pages.flatMap((page) => page.items) ?? [];
   const commentsCount = query.data.pages.at(0)?.count ?? 0;
 
-  console.log({
-    replies: comments,
-  });
-
   return (
     <div className="mt-6">
       <div className="flex flex-col gap-6">

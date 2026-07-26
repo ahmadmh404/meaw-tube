@@ -1,23 +1,22 @@
 "use client";
 
 import { FormEvent, SubmitEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { SearchIcon, XIcon } from "lucide-react";
 import { APP_URL } from "@/constants";
 import { Button } from "@/components/ui/button";
 
 export function SearchInput() {
-  const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("query") ?? "";
+  const [query, setQuery] = useState(searchQuery);
   const router = useRouter();
 
   function handleSearch(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const url = new URL(
-      "/search",
-      APP_URL ? `https://${APP_URL}` : "http://localhost:3000",
-    );
+    const url = new URL("/search", APP_URL);
     const newQuery = query.trim();
 
     url.searchParams.set("query", newQuery);

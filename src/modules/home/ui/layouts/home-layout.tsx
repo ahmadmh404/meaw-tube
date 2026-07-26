@@ -1,3 +1,5 @@
+import { connection } from "next/server";
+
 import { HomeNavbar } from "../components/home-navbar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +9,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-export function HomeLayout({ children }: Props) {
+export async function HomeLayout({ children }: Props) {
   return (
     <SidebarProvider>
       <TooltipProvider>

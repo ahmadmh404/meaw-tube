@@ -11,7 +11,9 @@ interface SearchPageProps {
   }>;
 }
 
-export default async function SearchPage({ searchParams }: SearchPageProps) {
+export default async function SearchPageSuspense({
+  searchParams,
+}: SearchPageProps) {
   const { query, categoryId } = await searchParams;
 
   void prefetch(trpc.categories.getMany.queryOptions());
