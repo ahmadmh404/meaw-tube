@@ -66,8 +66,6 @@ function VideosSectionSuspense() {
 
   const videos = query.data?.pages.flatMap((page) => page.items) ?? [];
 
-  console.log({ videos });
-
   return (
     <div className="px-4">
       <div className="border rounded-lg">

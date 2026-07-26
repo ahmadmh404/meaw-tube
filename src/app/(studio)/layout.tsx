@@ -1,9 +1,12 @@
 import { StudioLayout } from "@/modules/studio/ui/layout/studio-layout";
+import { connection } from "next/server";
 
 interface Props {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
-export default function Layout({ children }: Props) {
-    return <StudioLayout>{children}</StudioLayout>;
+export default async function Layout({ children }: Props) {
+  await connection();
+
+  return <StudioLayout>{children}</StudioLayout>;
 }

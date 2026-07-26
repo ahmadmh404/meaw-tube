@@ -25,7 +25,7 @@ export function VideoMenu({
   onRemove,
   variant = "ghost",
 }: VideoMenuProps) {
-  const fullURL = `${APP_URL || "http://localhost:3000"}/videos/${videoId}`;
+  const fullURL = `${APP_URL}/videos/${videoId}`;
   const [isCopied, setIsCopied] = useState(false);
 
   async function onShare() {

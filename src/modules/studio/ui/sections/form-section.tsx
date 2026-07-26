@@ -274,7 +274,7 @@ export function FormSectionSuspense({ videoId }: FormSectionProps) {
     trpc.categories.getMany.queryOptions(),
   );
 
-  const fullURL = `${APP_URL || "http://localhost:3000"}/videos/${video.video.id}`;
+  const fullURL = `${APP_URL}/videos/${video.video.id}`;
   const [isCopied, setIsCopied] = useState(false);
 
   async function onCopy() {

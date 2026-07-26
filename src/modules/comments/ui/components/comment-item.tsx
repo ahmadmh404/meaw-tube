@@ -119,10 +119,6 @@ export function CommentItem({
 
   const isPending = like.isPending || dislike.isPending;
 
-  console.log({
-    reaction: comment.user.userReactions,
-  });
-
   return (
     <div>
       <div className="flex gap-4">
