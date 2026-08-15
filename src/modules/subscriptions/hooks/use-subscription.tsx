@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useClerk } from "@clerk/nextjs";
 import { useTRPC } from "@/trpc/trpc-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { DEFAULT_LIMIT } from "@/constants";
 
 interface UseSubscriptionProps {
   userId: string;
@@ -31,18 +32,13 @@ export function useSubscription({
 
   // handler
   function onClick() {
-    if (isSubscribed) {
+    if (!isSubscribed) {
       subscribe.mutate(
         { creatorId: userId },
         {
           // TODO: revalidate subscriptions.getMany and users.getOne
           onSuccess() {
             toast.success("Subscribed");
-            if (fromVideoId) {
-              queryClient.invalidateQueries(
-                trpc.videos.getOne.queryFilter({ id: fromVideoId }),
-              );
-            }
           },
 
           onError(error) {
@@ -59,11 +55,6 @@ export function useSubscription({
         {
           onSuccess: () => {
             toast.success("UnSubscribed");
-            if (fromVideoId) {
-              queryClient.invalidateQueries(
-                trpc.videos.getOne.queryFilter({ id: fromVideoId }),
-              );
-            }
           },
 
           onError(error) {
@@ -74,6 +65,14 @@ export function useSubscription({
           },
         },
       );
+    }
+
+    if (fromVideoId) {
+      queryClient.invalidateQueries({
+        queryKey: [
+          trpc.videos.getSubscriptions.queryKey({ limit: DEFAULT_LIMIT }),
+        ],
+      });
     }
   }
 
