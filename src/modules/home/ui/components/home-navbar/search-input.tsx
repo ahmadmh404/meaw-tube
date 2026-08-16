@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 export function SearchInput() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("query") ?? "";
+  const categoryId = searchParams.get("categoryId") ?? "";
   const [query, setQuery] = useState(searchQuery);
   const router = useRouter();
 
@@ -18,6 +19,10 @@ export function SearchInput() {
 
     const url = new URL("/search", APP_URL);
     const newQuery = query.trim();
+
+    if (categoryId) {
+      url.searchParams.set("categoryId", categoryId);
+    }
 
     url.searchParams.set("query", newQuery);
 

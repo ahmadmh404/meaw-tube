@@ -18,7 +18,16 @@ import {
   protectedProcedure,
 } from "@/trpc/init";
 
-import { and, eq, getColumns, inArray, isNotNull } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  getColumns,
+  inArray,
+  isNotNull,
+  lt,
+  or,
+} from "drizzle-orm";
 import { workflow } from "@/lib/workflow";
 import {
   FullCleanupDataType,
@@ -117,6 +126,259 @@ export const videosRouter = createTRPCRouter({
       }
 
       return existingVideo;
+    }),
+
+  getMany: baseProcedure
+    .input(
+      z.object({
+        cursor: z
+          .object({
+            id: z.uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
+        categoryId: z.optional(z.string().min(1)),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { cursor, limit, categoryId } = input;
+
+      const data = await db
+        .select({
+          ...getColumns(videos),
+          user: users,
+          viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
+          likeCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videos.id),
+              eq(videoReactions.type, "like"),
+            ),
+          ),
+
+          dislikeCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videos.id),
+              eq(videoReactions.type, "dislike"),
+            ),
+          ),
+        })
+        .from(videos)
+        .innerJoin(users, eq(videos.userId, users.id))
+        .where(
+          and(
+            categoryId ? eq(videos.categoryId, categoryId) : undefined,
+
+            // Very important.
+            eq(videos.visibility, "public"),
+            eq(videos.muxStatus, "ready"),
+            cursor
+              ? or(
+                  lt(videos.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(videos.updatedAt, cursor.updatedAt),
+                    lt(videos.id, cursor.id),
+                  ),
+                )
+              : undefined,
+          ),
+        )
+        .orderBy(desc(videos.updatedAt), desc(videos.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+
+      // Remove the last item From The Data (It wasn't meant for the user, it's for our ops to find out if there is more data. )
+      const items = hasMore ? data.slice(0, -1) : data;
+
+      // Set the cursor vlue to the last item's ID (look at the top` lt(videos.id, cursor.id)`)
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? {
+            id: lastItem.id,
+            updatedAt: lastItem.updatedAt,
+          }
+        : null;
+
+      return {
+        items,
+        nextCursor,
+      };
+    }),
+
+  getTrending: baseProcedure
+    .input(
+      z.object({
+        cursor: z
+          .object({
+            id: z.uuid(),
+            viewCount: z.number(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { cursor, limit } = input;
+
+      const viewCountSubQuery = db.$count(
+        videoViews,
+        eq(videos.id, videoViews.videoId),
+      );
+
+      const data = await db
+        .select({
+          ...getColumns(videos),
+          user: users,
+          viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
+          likeCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videos.id),
+              eq(videoReactions.type, "like"),
+            ),
+          ),
+
+          dislikeCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videos.id),
+              eq(videoReactions.type, "dislike"),
+            ),
+          ),
+        })
+        .from(videos)
+        .innerJoin(users, eq(videos.userId, users.id))
+        .where(
+          and(
+            eq(videos.visibility, "public"),
+            eq(videos.muxStatus, "ready"),
+            cursor
+              ? or(
+                  lt(viewCountSubQuery, cursor.viewCount),
+                  and(
+                    eq(viewCountSubQuery, cursor.viewCount),
+                    lt(videos.id, cursor.id),
+                  ),
+                )
+              : undefined,
+          ),
+        )
+        .orderBy(desc(viewCountSubQuery), desc(videos.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+
+      // Remove the last item From The Data (It wasn't meant for the user, it's for our ops to find out if there is more data. )
+      const items = hasMore ? data.slice(0, -1) : data;
+
+      // Set the cursor vlue to the last item's ID (look at the top` lt(videos.id, cursor.id)`)
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? {
+            id: lastItem.id,
+            viewCount: lastItem.viewCount,
+          }
+        : null;
+
+      return {
+        items,
+        nextCursor,
+      };
+    }),
+
+  getSubscriptions: protectedProcedure
+    .input(
+      z.object({
+        cursor: z
+          .object({
+            id: z.uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { cursor, limit } = input;
+      const { id: userId } = ctx.user;
+
+      const viewerSubscriptions = db.$with("viewer_subscriptions").as(
+        db
+          .select({
+            userId: subscriptions.creatorId,
+          })
+          .from(subscriptions)
+          .where(eq(subscriptions.viewerId, userId)),
+      );
+
+      const data = await db
+        .with(viewerSubscriptions)
+        .select({
+          ...getColumns(videos),
+          user: users,
+          viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
+          likeCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videos.id),
+              eq(videoReactions.type, "like"),
+            ),
+          ),
+
+          dislikeCount: db.$count(
+            videoReactions,
+            and(
+              eq(videoReactions.videoId, videos.id),
+              eq(videoReactions.type, "dislike"),
+            ),
+          ),
+        })
+        .from(videos)
+        .innerJoin(users, eq(videos.userId, users.id))
+        // instead of comparing each video's creator id we filter the data by the user id itself.
+        .innerJoin(
+          viewerSubscriptions,
+          eq(users.id, viewerSubscriptions.userId),
+        )
+        .where(
+          and(
+            eq(videos.visibility, "public"),
+            eq(videos.muxStatus, "ready"),
+            cursor
+              ? or(
+                  lt(videos.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(videos.updatedAt, cursor.updatedAt),
+                    lt(videos.id, cursor.id),
+                  ),
+                )
+              : undefined,
+          ),
+        )
+        .orderBy(desc(videos.updatedAt), desc(videos.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+
+      // Remove the last item From The Data (It wasn't meant for the user, it's for our ops to find out if there is more data. )
+      const items = hasMore ? data.slice(0, -1) : data;
+
+      // Set the cursor vlue to the last item's ID (look at the top` lt(videos.id, cursor.id)`)
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? {
+            id: lastItem.id,
+            updatedAt: lastItem.updatedAt,
+          }
+        : null;
+
+      return {
+        items,
+        nextCursor,
+      };
     }),
 
   create: protectedProcedure.mutation(async ({ ctx }) => {

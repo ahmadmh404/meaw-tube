@@ -63,9 +63,11 @@ export function CommentItem({
   const like = useMutation(
     trpc.commentReactions.like.mutationOptions({
       onSuccess() {
-        queryClient.invalidateQueries(
-          trpc.comments.getMany.queryFilter({ videoId: comment.videoId }),
-        );
+        queryClient.invalidateQueries({
+          queryKey: trpc.comments.getMany.queryKey({
+            videoId: comment.videoId,
+          }),
+        });
       },
       onError(error) {
         toast.error("Something went wrong");

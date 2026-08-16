@@ -1,3 +1,4 @@
+import { DEFAULT_LIMIT } from "@/constants";
 import { HomeView } from "@/modules/home/ui/views/home-view";
 import { HydrateClient } from "@/trpc/components/hydrate-client";
 import { prefetch } from "@/trpc/lib/prefetch";
@@ -14,6 +15,12 @@ export default async function Page({ searchParams }: PageProps) {
 
   // prefetch here leads to useSuspenseQuery in client component if nromal query and useSuspenseInfiniteQuery
   void prefetch(trpc.categories.getMany.queryOptions());
+  void prefetch(
+    trpc.videos.getMany.infiniteQueryOptions(
+      { limit: DEFAULT_LIMIT, categoryId },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+    ),
+  );
 
   return (
     <HydrateClient>

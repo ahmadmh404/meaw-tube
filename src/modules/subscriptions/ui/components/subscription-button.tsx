@@ -16,6 +16,7 @@ export function SubscriptionButton({
   className,
   size,
 }: SubscriptionButtonProps) {
+  console.log({ isSubscribed });
   return (
     <Button
       className={cn("rounded-full", className)}
