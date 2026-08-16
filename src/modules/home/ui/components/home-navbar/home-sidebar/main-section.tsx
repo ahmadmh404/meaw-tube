@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { FlameIcon, HomeIcon, PlaySquareIcon } from "lucide-react";
 import { useAuth, useClerk } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 
 const items = [
   { title: "Home", url: "/", icon: HomeIcon, auth: false },
@@ -29,6 +30,8 @@ const items = [
 ];
 
 export function MainSection() {
+  const pathname = usePathname();
+
   const { openSignIn } = useClerk();
   const { isSignedIn } = useAuth();
 
@@ -41,7 +44,7 @@ export function MainSection() {
               <SidebarMenuButton
                 tooltip={item.title}
                 asChild
-                isActive={false}
+                isActive={pathname === item.url}
                 onClick={(e) => {
                   if (!isSignedIn && item.auth) {
                     e.preventDefault();

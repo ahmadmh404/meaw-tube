@@ -13,6 +13,7 @@ import {
 
 import { History, ListVideoIcon, ThumbsUpIcon } from "lucide-react";
 import { useAuth, useClerk } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 
 const items = [
   { title: "History", url: "/playlists/history", icon: History, auth: true },
@@ -31,6 +32,8 @@ const items = [
 ];
 
 export function PersonalSection() {
+  const pathname = usePathname();
+
   const { openSignIn } = useClerk();
   const { isSignedIn } = useAuth();
 
@@ -44,14 +47,13 @@ export function PersonalSection() {
               <SidebarMenuButton
                 tooltip={item.title}
                 asChild
-                isActive={false}
+                isActive={pathname === item.url}
                 onClick={(e) => {
                   if (!isSignedIn && item.auth) {
                     e.preventDefault();
                     return openSignIn();
                   }
-                }}
-              >
+                }}>
                 <Link href={item.url} className="flex items-center gap-4">
                   <item.icon />
                   <span className="text-sm">{item.title}</span>

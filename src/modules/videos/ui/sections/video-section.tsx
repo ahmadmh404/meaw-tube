@@ -44,23 +44,22 @@ export function VideoSectionSuspense({ videoId }: VideoViewProps) {
     }),
   );
 
-  const create = useMutation(trpc.videoViews.create.mutationOptions());
+  const create = useMutation(
+    trpc.videoViews.create.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.videos.getOne.queryKey({ id: videoId }),
+        });
+      },
+    }),
+  );
 
   function handlePlay() {
     if (!isSignedIn) {
       return;
     }
 
-    create.mutate(
-      { videoId },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: trpc.videos.getOne.queryKey({ id: videoId }),
-          });
-        },
-      },
-    );
+    create.mutate({ videoId });
   }
 
   return (

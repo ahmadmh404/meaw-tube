@@ -36,8 +36,6 @@ export function ResultsSection(props: ResultsSectionProps) {
 }
 
 function ResultsSectionSuspense({ categoryId, query }: ResultsSectionProps) {
-  const isMobile = useIsMobile();
-
   const trpc = useTRPC();
   const resultsQuery = useSuspenseInfiniteQuery(
     trpc.search.getMany.infiniteQueryOptions(
@@ -49,27 +47,24 @@ function ResultsSectionSuspense({ categoryId, query }: ResultsSectionProps) {
   const results = resultsQuery.data.pages.flatMap((page) => page.items) || [];
 
   return (
-    <>
-      {isMobile ? (
-        <div className="flex flex-col gap-4 gap-y-10">
-          {results.map((video) => (
-            <VideoGridCard key={video.id} data={video} />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {results.map((video) => (
-            <VideoRowCard key={video.id} data={video} />
-          ))}
-        </div>
-      )}
+    <div>
+      <div className="flex md:hidden flex-col gap-4 gap-y-10">
+        {results.map((video) => (
+          <VideoGridCard key={video.id} data={video} />
+        ))}
+      </div>
+      <div className="hidden md:flex flex-col gap-4">
+        {results.map((video) => (
+          <VideoRowCard key={video.id} data={video} />
+        ))}
+      </div>
 
       <InfiniteScroll
         hasNextPage={resultsQuery.hasNextPage}
         isFetchingNextPage={resultsQuery.isFetchingNextPage}
         fetchNextPage={resultsQuery.fetchNextPage}
       />
-    </>
+    </div>
   );
 }
 
@@ -82,7 +77,7 @@ function ResultsSectionSkeleton() {
         ))}
       </div>
 
-      <div className="md:hidden flex flex-col gap-4 p-4 gap-y-10 pt-6">
+      <div className="md:hidden flex flex-col gap-4 p-4 pt-6">
         {Array.from({ length: 5 }).map((_, index) => (
           <VideoGridCardSkeleton key={index} />
         ))}

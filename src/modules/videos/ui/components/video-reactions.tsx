@@ -37,9 +37,11 @@ export function VideoReactions({
       { videoId },
       {
         onSuccess: () => {
-          // TODO: invalidate liked playlist when we have playlists
           queryClient.invalidateQueries({
             queryKey: trpc.videos.getOne.queryKey({ id: videoId }),
+          });
+          queryClient.invalidateQueries({
+            queryKey: trpc.playlists.getLiked.queryKey({}),
           });
         },
 
@@ -58,9 +60,11 @@ export function VideoReactions({
       { videoId },
       {
         onSuccess: () => {
-          // TODO: invalidate liked playlist when we have playlists
           queryClient.invalidateQueries({
             queryKey: trpc.videos.getOne.queryKey({ id: videoId }),
+          });
+          queryClient.invalidateQueries({
+            queryKey: trpc.playlists.getLiked.queryKey({}),
           });
         },
 
