@@ -47,7 +47,7 @@ export function VideoOwner({ user, videoId }: VideoOwnerProps) {
           <SubscriptionButton
             onClick={onClick}
             disabled={isPending || !isLoaded}
-            isSubscribed={false}
+            isSubscribed={user.isUserSubscribed}
             className="flex"
           />
         </Button>
