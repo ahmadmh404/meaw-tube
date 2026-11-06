@@ -108,7 +108,6 @@ function FormSectionFallback() {
             <Skeleton className="h-5 w-20" />
             <Skeleton className="h-[84px] w-[153px]" />
           </div>
-
           <div className="space-y-2">
             <Skeleton className="h-5 w-20" />
             <Skeleton className="h-10 w-full" />

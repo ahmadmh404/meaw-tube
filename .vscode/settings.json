@@ -1,5 +1,6 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
+<<<<<<< HEAD
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[javascript]": {
@@ -7,3 +8,7 @@
   },
   "cSpell.words": ["uploadthing"]
 }
+=======
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}
+>>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f

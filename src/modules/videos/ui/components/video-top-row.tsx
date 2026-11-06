@@ -55,6 +55,7 @@ export function VideoTopRow({ video }: VideoTopRowProps) {
       />
     </div>
   );
+<<<<<<< HEAD
 }
 
 export function VideoTopRowSkeleton() {
@@ -80,3 +81,6 @@ export function VideoTopRowSkeleton() {
     </div>
   );
 }
+=======
+};
+>>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f

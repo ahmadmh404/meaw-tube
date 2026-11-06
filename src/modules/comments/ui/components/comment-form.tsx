@@ -51,6 +51,7 @@ export function CommentForm({
     },
   });
 
+<<<<<<< HEAD
   const create = useMutation(
     trpc.comments.create.mutationOptions({
       onSuccess() {
@@ -153,3 +154,65 @@ export function CommentForm({
     </form>
   );
 }
+=======
+  const handleSubmit = (values: z.infer<typeof commentInsertSchema>) => {
+    create.mutate(values);
+  };
+
+  const handleCancel = () => {
+    form.reset();
+    onCancel?.();
+  };
+
+  return (
+    <Form {...form}>
+      <form 
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="flex gap-4 group"
+      >
+        <UserAvatar
+          size="lg"
+          imageUrl={user?.imageUrl || "/user-placeholder.svg"}
+          name={user?.username || "User"}
+        />
+        <div className="flex-1">
+          <FormField
+            name="value"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder={
+                      variant === "reply"
+                      ? "Reply to this comment..."
+                      : "Add a comment..."
+                    }
+                    className="resize-none bg-transparent overflow-hidden min-h-0"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="justify-end gap-2 mt-2 flex">
+            {onCancel && (
+              <Button variant="ghost" type="button" onClick={handleCancel}>
+                Cancel
+              </Button>
+            )}
+            <Button
+              disabled={create.isPending}
+              type="submit"
+              size="sm"
+            >
+             {variant === "reply" ? "Reply" : "Comment"}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </Form>
+  )
+};
+>>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f

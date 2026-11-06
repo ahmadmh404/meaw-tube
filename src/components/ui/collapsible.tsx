@@ -1,5 +1,6 @@
 "use client"
 
+<<<<<<< HEAD
 import { Collapsible as CollapsiblePrimitive } from "radix-ui"
 
 function Collapsible({
@@ -29,5 +30,14 @@ function CollapsibleContent({
     />
   )
 }
+=======
+import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
+
+const Collapsible = CollapsiblePrimitive.Root
+
+const CollapsibleTrigger = CollapsiblePrimitive.CollapsibleTrigger
+
+const CollapsibleContent = CollapsiblePrimitive.CollapsibleContent
+>>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
 
 export { Collapsible, CollapsibleTrigger, CollapsibleContent }

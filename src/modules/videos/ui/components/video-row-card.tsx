@@ -64,7 +64,6 @@ export function VideoRowCardSkeleton({
             <Skeleton
               className={cn("h-5 w-[40%]", size === "compact" && "h-4 w-[40%]")}
             />
-
             {size === "default" && (
               <>
                 <Skeleton className="h-4 w-[20%] mt-1" />
