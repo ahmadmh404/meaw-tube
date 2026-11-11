@@ -19,7 +19,8 @@ export function HomeVideosSection(props: HomeVideosSectionProps) {
   return (
     <Suspense
       key={`${props.categoryId}`}
-      fallback={<HomeVideosSectionSkeleton />}>
+      fallback={<HomeVideosSectionSkeleton />}
+    >
       <ErrorBoundary errorComponent={(err) => <div>Error...</div>}>
         <HOmeVideosSectionSuspense {...props} />
       </ErrorBoundary>

@@ -1,7 +1,12 @@
 import { DEFAULT_LIMIT } from "@/constants";
-import { HydrateClient, trpc } from "@/trpc/server";
 
 import { VideosView } from "@/modules/playlists/ui/views/videos-view";
+
+import { trpc } from "@/trpc/trpc-server";
+
+import { prefetch } from "@/trpc/lib/prefetch";
+
+import { HydrateClient } from "@/trpc/components/hydrate-client";
 
 export const dynamic = "force-dynamic";
 
@@ -12,14 +17,19 @@ interface PageProps {
 const Page = async ({ params }: PageProps) => {
   const { playlistId } = await params;
 
-  void trpc.playlists.getOne.prefetch({ id: playlistId });
-  void trpc.playlists.getVideos.prefetchInfinite({ playlistId, limit: DEFAULT_LIMIT });
+  void prefetch(trpc.playlists.getOne.queryOptions({ id: playlistId }));
+  void prefetch(
+    trpc.playlists.getVideos.infiniteQueryOptions(
+      { playlistId, limit: DEFAULT_LIMIT },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+    ),
+  );
 
-  return ( 
+  return (
     <HydrateClient>
       <VideosView playlistId={playlistId} />
     </HydrateClient>
   );
-}
- 
+};
+
 export default Page;

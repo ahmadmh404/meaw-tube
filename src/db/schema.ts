@@ -29,7 +29,8 @@ export const users = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     clerkId: text("clerk_id").unique().notNull(),
     name: text("name").notNull(),
-    // TODO: Add abnner fileds
+    bannerUrl: text("banner_url"),
+    bannerKey: text("banner_key"),
     imageUrl: text("image_url").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -218,3 +219,34 @@ export const subscriptions = pgTable(
 export const SubscriptionsInsertSchema = createInsertSchema(subscriptions);
 export const SubscriptionsUpdateSchema = createUpdateSchema(subscriptions);
 export const SubscriptionsSelectSchema = createSelectSchema(subscriptions);
+
+// ================== Playlsists ================
+
+export const playlists = pgTable("playlists", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const playlistsInsertSchema = createInsertSchema(playlists);
+export const playlistsUpdateSchema = createUpdateSchema(playlists);
+export const playlistsSelectSchema = createSelectSchema(playlists);
+
+export const playlistVideos = pgTable("playlist_videos", {
+  playlistId: uuid("playlist_id").references(() => playlists.id, { onDelete: "cascade" }).notNull(),
+  videoId: uuid("video_id").references(() => videos.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => [
+  primaryKey({
+    name: "playlist_videos_pk",
+    columns: [t.playlistId, t.videoId],
+  }),
+]);
+
+export const playlistVideosInsertSchema = createInsertSchema(playlistVideos);
+export const playlistVideosUpdateSchema = createUpdateSchema(playlistVideos);
+export const playlistVideosSelectSchema = createSelectSchema(playlistVideos);

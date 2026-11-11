@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-<<<<<<< HEAD
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -19,17 +18,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-=======
-import { Inter } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
-
-import { TRPCProvider } from "@/trpc/client";
-import { Toaster } from "@/components/ui/sonner";
-
-import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -42,7 +30,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-<<<<<<< HEAD
     <html
       lang="en"
       className={cn(
@@ -60,19 +47,5 @@ export default function RootLayout({
         </TRPCReactProvider>
       </body>
     </html>
-=======
-    <ClerkProvider afterSignOutUrl="/">
-      <html lang="en">
-        <body
-          className={inter.className}
-        >
-          <TRPCProvider>
-            <Toaster />
-            {children}
-          </TRPCProvider>
-        </body>
-      </html>
-    </ClerkProvider>
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
   );
 }

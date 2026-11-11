@@ -6,58 +6,95 @@ import { DEFAULT_LIMIT } from "@/constants";
 import { Button } from "@/components/ui/button";
 import { ResponsiveModal } from "@/components/responsive-modal";
 import { InfiniteScroll } from "@/components/infinite-scroll";
+import { useTRPC } from "@/trpc/trpc-client";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 interface PlaylistAddModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   videoId: string;
-};
+}
 
 export const PlaylistAddModal = ({
   open,
   onOpenChange,
-  videoId
+  videoId,
 }: PlaylistAddModalProps) => {
-  const utils = trpc.useUtils();
-  const { 
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const {
     data: playlists,
     isLoading,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = trpc.playlists.getManyForVideo.useInfiniteQuery({
-    limit: DEFAULT_LIMIT,
-    videoId,
-  }, {
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    enabled: !!videoId && open,
-  });
+  } = useInfiniteQuery(
+    trpc.playlists.getManyForVideo.infiniteQueryOptions(
+      {
+        limit: DEFAULT_LIMIT,
+        videoId,
+      },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        enabled: !!videoId && open,
+      },
+    ),
+  );
 
-  const addVideo = trpc.playlists.addVideo.useMutation({
-    onSuccess: (data) => {
-      toast.success("Video added to playlist");
-      utils.playlists.getMany.invalidate();
-      utils.playlists.getManyForVideo.invalidate({ videoId });
-      utils.playlists.getOne.invalidate({ id: data.playlistId })
-      utils.playlists.getVideos.invalidate({ playlistId: data.playlistId })
-    },
-    onError: () => {
-      toast.error("Something went wrong");
-    },
-  });
+  const addVideo = useMutation(
+    trpc.playlists.addVideo.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Video added to playlist");
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getMany.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getManyForVideo.queryKey({ videoId }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getOne.queryKey({ id: data.playlistId }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getVideos.queryKey({
+            playlistId: data.playlistId,
+          }),
+        });
+      },
+      onError: () => {
+        toast.error("Something went wrong");
+      },
+    }),
+  );
 
-  const removeVideo = trpc.playlists.removeVideo.useMutation({
-    onSuccess: (data) => {
-      toast.success("Video removed from playlist");
-      utils.playlists.getMany.invalidate();
-      utils.playlists.getManyForVideo.invalidate({ videoId });
-      utils.playlists.getOne.invalidate({ id: data.playlistId })
-      utils.playlists.getVideos.invalidate({ playlistId: data.playlistId })
-    },
-    onError: () => {
-      toast.error("Something went wrong");
-    },
-  });
+  const removeVideo = useMutation(
+    trpc.playlists.removeVideo.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Video removed from playlist");
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getMany.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getManyForVideo.queryKey({ videoId }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getOne.queryKey({ id: data.playlistId }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getVideos.queryKey({
+            playlistId: data.playlistId,
+          }),
+        });
+      },
+      onError: () => {
+        toast.error("Something went wrong");
+      },
+    }),
+  );
 
   return (
     <ResponsiveModal
@@ -75,16 +112,16 @@ export const PlaylistAddModal = ({
           playlists?.pages
             .flatMap((page) => page.items)
             .map((playlist) => (
-              <Button 
+              <Button
                 key={playlist.id}
                 variant="ghost"
                 className="w-full justify-start px-2 [&_svg]:size-5"
                 size="lg"
                 onClick={() => {
                   if (playlist.containsVideo) {
-                    removeVideo.mutate({ playlistId: playlist.id, videoId })
+                    removeVideo.mutate({ playlistId: playlist.id, videoId });
                   } else {
-                    addVideo.mutate({ playlistId: playlist.id, videoId })
+                    addVideo.mutate({ playlistId: playlist.id, videoId });
                   }
                 }}
                 disabled={removeVideo.isPending || addVideo.isPending}
@@ -96,8 +133,7 @@ export const PlaylistAddModal = ({
                 )}
                 {playlist.name}
               </Button>
-            ))
-        }
+            ))}
         {!isLoading && (
           <InfiniteScroll
             hasNextPage={hasNextPage}

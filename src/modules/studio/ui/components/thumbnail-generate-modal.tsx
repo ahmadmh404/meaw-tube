@@ -36,7 +36,6 @@ export function ThumbnailGenerateModal({
   });
 
   const trpc = useTRPC();
-
   const generateThumbnail = useMutation(
     trpc.videos.generateThumbnail.mutationOptions(),
   );

@@ -1,18 +1,22 @@
 import { DEFAULT_LIMIT } from "@/constants";
-import { HydrateClient, trpc } from "@/trpc/server";
+import { trpc } from "@/trpc/trpc-server";
 
 import { PlaylistsView } from "@/modules/playlists/ui/views/playlists-view";
+import { prefetch } from "@/trpc/lib/prefetch";
+import { HydrateClient } from "@/trpc/components/hydrate-client"  ;
 
 export const dynamic = "force-dynamic";
 
 const Page = async () => {
-  void trpc.playlists.getMany.prefetchInfinite({ limit: DEFAULT_LIMIT });
+  void prefetch(trpc.playlists.getMany.infiniteQueryOptions(
+      { limit: DEFAULT_LIMIT },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+    ));
 
-  return ( 
+  return (   
     <HydrateClient>
       <PlaylistsView />
     </HydrateClient>
   );
 };
- 
 export default Page;

@@ -1,5 +1,4 @@
 import { DEFAULT_LIMIT } from "@/constants";
-import { HomeView } from "@/modules/home/ui/views/home-view";
 import { HistoryView } from "@/modules/playlists/ui/views/history-view";
 import { HydrateClient } from "@/trpc/components/hydrate-client";
 import { prefetch } from "@/trpc/lib/prefetch";

@@ -1,6 +1,6 @@
 import { LikedVideosSection } from "../sections/liked-videos-section";
 
-export fsunction LikedView() {
+export function LikedView() {
   return (
     <div className="max-w-3xl mx-auto mb-10 px-4 pt-2.5 flex flex-col gap-y-6">
       <div>

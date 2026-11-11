@@ -1,6 +1,8 @@
 import { DEFAULT_LIMIT } from "@/constants";
-import { HydrateClient, trpc } from "@/trpc/server";
 
+import { trpc } from "@/trpc/trpc-server";
+import { prefetch } from "@/trpc/lib/prefetch";
+import { HydrateClient } from "@/trpc/components/hydrate-client";
 import { UserView } from "@/modules/users/ui/views/user-view";
 
 interface PageProps {
@@ -8,18 +10,20 @@ interface PageProps {
     userId: string;
   }>;
 }
-
-const Page = async ({ params }: PageProps) => {
+export default async function Page({ params }: PageProps) {
   const { userId } = await params;
 
-  void trpc.users.getOne.prefetch({ id: userId });
-  void trpc.videos.getMany.prefetchInfinite({ userId, limit: DEFAULT_LIMIT });
-  
-  return ( 
+  void prefetch(trpc.users.getOne.queryOptions({ id: userId }));
+  void prefetch(
+    trpc.videos.getMany.infiniteQueryOptions(
+      { userId: userId, limit: DEFAULT_LIMIT },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+    ),
+  );
+
+  return (
     <HydrateClient>
       <UserView userId={userId} />
     </HydrateClient>
   );
-};
- 
-export default Page;
+}

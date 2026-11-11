@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { UserButton, useAuth, SignInButton } from "@clerk/nextjs";
-
 import { ClapperboardIcon, UserCircleIcon } from "lucide-react";
 
 export function AuthButton() {

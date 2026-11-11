@@ -6,7 +6,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { SidebarHeader, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 
 export const StudioSidebarHeader = () => {
-  const { user } = useUser();
+  const { user } = useUser(); 
   const { state } = useSidebar();
 
   if (!user) {

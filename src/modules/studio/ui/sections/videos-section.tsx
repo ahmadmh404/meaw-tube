@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { DEFAULT_LIMIT } from "@/constants";
 import { useTRPC } from "@/trpc/trpc-client";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 
 import {
@@ -57,7 +57,7 @@ function VideosSectionSKeleton() {
 
 function VideosSectionSuspense() {
   const trpc = useTRPC();
-  const query = useInfiniteQuery(
+  const query = useSuspenseInfiniteQuery(
     trpc.studio.getMany.infiniteQueryOptions(
       { limit: DEFAULT_LIMIT },
       { getNextPageParam: (lastPage) => lastPage.nextCursor },

@@ -12,10 +12,11 @@ import {
   SidebarMenuButton, 
   SidebarMenuItem
 } from "@/components/ui/sidebar";
-import { trpc } from "@/trpc/client";
 import { DEFAULT_LIMIT } from "@/constants";
 import { UserAvatar } from "@/components/user-avatar";
 import { ListIcon } from "lucide-react";
+import { useTRPC } from "@/trpc/trpc-client";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 export const LoadingSkeleton = () => {
   return (
@@ -32,16 +33,23 @@ export const LoadingSkeleton = () => {
   );
 };
 
-export const SubscriptionsSection = () => {
+export function SubscriptionsSection () {
+const trpc = useTRPC();
   const pathname = usePathname();
-  const { data, isLoading } = trpc.subscriptions.getMany.useInfiniteQuery(
+  const { data, isLoading } = useInfiniteQuery(trpc.subscriptions.getMany.infiniteQueryOptions(
     {
       limit: DEFAULT_LIMIT,
     },
     {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     }
-  );
+  ));
+
+
+  const subscriptions = data 
+    ? data.pages.flatMap(page => page.items)
+    : [];
+
 
   return (
     <SidebarGroup>
@@ -49,7 +57,12 @@ export const SubscriptionsSection = () => {
       <SidebarGroupContent>
         <SidebarMenu>
           {isLoading && <LoadingSkeleton />}
-          {!isLoading && data?.pages.flatMap((page) => page.items).map((subscription) => (
+          {!isLoading && subscriptions.length === 0 && (
+            <p className="mt-2  text-center text-xs font-normal text-muted-foreground">
+                No Subscriptions Yet!
+            </p>
+          )}
+          {!isLoading && subscriptions.map((subscription) => (
             <SidebarMenuItem key={`${subscription.creatorId}-${subscription.viewerId}`}>
               <SidebarMenuButton
                 tooltip={subscription.user.name}
@@ -67,7 +80,7 @@ export const SubscriptionsSection = () => {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
-          {!isLoading && (
+          {!isLoading && subscriptions.length > 0 && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild

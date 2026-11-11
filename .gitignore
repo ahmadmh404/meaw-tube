@@ -12,10 +12,7 @@
 
 # testing
 /coverage
-<<<<<<< HEAD
 /resources/*
-=======
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
 
 # next.js
 /.next/
@@ -35,11 +32,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-<<<<<<< HEAD
 .env*
-=======
-.env
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
 
 # vercel
 .vercel
@@ -47,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# clerk configuration (can include secrets)
+/.clerk/

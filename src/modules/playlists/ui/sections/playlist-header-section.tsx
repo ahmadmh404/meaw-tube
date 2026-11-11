@@ -4,11 +4,13 @@ import { toast } from "sonner";
 import { Suspense } from "react";
 import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ErrorBoundary } from "react-error-boundary";
 
 import { trpc } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTRPC } from "@/trpc/trpc-client";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 
 interface PlaylistHeaderSectionProps {
   playlistId: string;
@@ -19,7 +21,7 @@ export const PlaylistHeaderSection = ({
 }: PlaylistHeaderSectionProps) => {
   return (
     <Suspense fallback={<PlaylistHeaderSectionSkeleton />}>
-      <ErrorBoundary fallback={<p>Error</p>}>
+      <ErrorBoundary errorComponent={err => <p>Error</p>}>
         <PlaylistHeaderSectionSuspense playlistId={playlistId} />
       </ErrorBoundary>
     </Suspense>
@@ -38,20 +40,22 @@ export const PlaylistHeaderSectionSkeleton = () => {
 const PlaylistHeaderSectionSuspense = ({
   playlistId,
 }: PlaylistHeaderSectionProps) => {
-  const [playlist] = trpc.playlists.getOne.useSuspenseQuery({ id: playlistId });
-
+  const trpc = useTRPC();
   const router = useRouter();
-  const utils = trpc.useUtils();
-  const remove = trpc.playlists.remove.useMutation({
+  const queryClient = useQueryClient();
+  const {data: playlist} = useSuspenseQuery(trpc.playlists.getOne.queryOptions({ id: playlistId }));
+
+
+  const remove = useMutation(trpc.playlists.remove.mutationOptions({
     onSuccess: () => {
       toast.success("Playlist removed");
-      utils.playlists.getMany.invalidate();
+      queryClient.invalidateQueries({queryKey: trpc.playlists.getMany.queryKey()});
       router.push("/playlists");
     },
     onError: () => {
       toast.error("Something went wrong");
     }
-  });
+  }));
 
   return (
     <div className="flex justify-between items-center">

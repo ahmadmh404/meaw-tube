@@ -27,7 +27,8 @@ export function ResultsSection(props: ResultsSectionProps) {
     <Suspense
       // This is for treating every new combination of these two as a new request
       key={`${props.categoryId}-${props.query}`}
-      fallback={<ResultsSectionSkeleton />}>
+      fallback={<ResultsSectionSkeleton />}
+    >
       <ErrorBoundary errorComponent={(err) => <div>Error..</div>}>
         <ResultsSectionSuspense {...props} />
       </ErrorBoundary>

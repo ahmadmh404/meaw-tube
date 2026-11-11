@@ -1,12 +1,18 @@
 import { DEFAULT_LIMIT } from "@/constants";
-import { HydrateClient, trpc } from "@/trpc/server";
 
+import { trpc } from "@/trpc/trpc-server";
+
+import { prefetch } from "@/trpc/lib/prefetch";
+
+import { HydrateClient } from "@/trpc/components/hydrate-client";
 import { SubscriptionsView } from "@/modules/subscriptions/ui/views/subscriptions-view";
 
 const Page = async () => {
-  void trpc.subscriptions.getMany.prefetchInfinite({
-    limit: DEFAULT_LIMIT,
-  });
+  void prefetch(trpc.playlists.getMany.infiniteQueryOptions(
+      { limit: DEFAULT_LIMIT },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor },
+  ));
+
 
   return ( 
     <HydrateClient>

@@ -68,7 +68,8 @@ export function VideoSectionSuspense({ videoId }: VideoViewProps) {
         className={cn(
           "aspect-video bg-black rounded-xl overflow-hidden relative",
           video.muxStatus !== "ready" && "rounded-b-none",
-        )}>
+        )}
+      >
         <VideoPlayer
           autoPlay={false}
           onPlay={handlePlay}

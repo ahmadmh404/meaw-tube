@@ -67,7 +67,6 @@ export async function POST(req: Request) {
           muxStatus: data.status,
         })
         .where(eq(videos.muxUploadId, data.upload_id));
-<<<<<<< HEAD
 
       break;
 
@@ -99,62 +98,19 @@ export async function POST(req: Request) {
       const { key: thumbnailKey, ufsUrl: thumbnailUrl } =
         uploadedThumbnail.data;
       const { key: previewKey, ufsUrl: previewUrl } = uploadedPreview.data;
-=======
-      break;
-    }
-
-    case "video.asset.ready": {
-      const data = payload.data as VideoAssetReadyWebhookEvent["data"];
-      const playbackId = data.playback_ids?.[0].id;
-
-      if (!data.upload_id) {
-        return new Response("Missing upload ID", { status: 400 });
-      }
-
-      if (!playbackId) {
-        return new Response("Missing playback ID", { status: 400 });
-      }
-
-      const tempThumbnailUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
-      const tempPreviewUrl = `https://image.mux.com/${playbackId}/animated.gif`;
-      const duration = data.duration ? Math.round(data.duration * 1000) : 0;
-
-      const utapi = new UTApi();
-      const [
-        uploadedThumbnail,
-        uploadedPreview,
-      ] = await utapi.uploadFilesFromUrl([
-        tempThumbnailUrl,
-        tempPreviewUrl,
-      ]);
-
-      if (!uploadedThumbnail.data || !uploadedPreview.data) {
-        return new Response("Failed to upload thumbnail or preview", { status: 500 });
-      }
-
-      const { key: thumbnailKey, url: thumbnailUrl } = uploadedThumbnail.data;
-      const { key: previewKey, url: previewUrl } = uploadedPreview.data;
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
 
       await db
         .update(videos)
         .set({
-<<<<<<< HEAD
           muxStatus: readyData.status,
           muxPlaybackId: playbackId,
           muxAssetId: readyData.id,
-=======
-          muxStatus: data.status,
-          muxPlaybackId: playbackId,
-          muxAssetId: data.id,
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
           thumbnailUrl,
           thumbnailKey,
           previewUrl,
           previewKey,
           duration,
         })
-<<<<<<< HEAD
         .where(eq(videos.muxUploadId, readyData.upload_id));
 
       break;
@@ -163,23 +119,11 @@ export async function POST(req: Request) {
       const errorData = payload.data as VideoAssetErroredWebhookEvent["data"];
       if (!errorData.upload_id) {
         return new Response("Missing Upload ID", { status: 400 });
-=======
-        .where(eq(videos.muxUploadId, data.upload_id));
-      break;
-    }
-
-    case "video.asset.errored": {
-      const data = payload.data as VideoAssetErroredWebhookEvent["data"];
-
-      if (!data.upload_id) {
-        return new Response("Missing upload ID", { status: 400 });
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
       }
 
       await db
         .update(videos)
         .set({
-<<<<<<< HEAD
           muxStatus: errorData.status,
         })
         .where(eq(videos.muxUploadId, errorData.upload_id));
@@ -225,48 +169,10 @@ export async function POST(req: Request) {
 
       if (!trackData.asset_id) {
         return new Response("Missing Asset ID", { status: 400 });
-=======
-          muxStatus: data.status,
-        })
-        .where(eq(videos.muxUploadId, data.upload_id));
-      break;
-    }
-
-    case "video.asset.deleted": {
-      const data = payload.data as VideoAssetDeletedWebhookEvent["data"];
-
-      if (!data.upload_id) {
-        return new Response("Missing upload ID", { status: 400 });
-      }
-
-      console.log("Deleting video: ", { uploadId: data.upload_id });
-
-      await db
-        .delete(videos)
-        .where(eq(videos.muxUploadId, data.upload_id));
-      break;
-    }
-
-    case "video.asset.track.ready": {
-      const data = payload.data as VideoAssetTrackReadyWebhookEvent["data"] & {
-        asset_id: string;
-      }
-
-      console.log("Track ready");
-
-      // Typescript incorrenctly says that asset_id does not exist
-      const assetId = data.asset_id;
-      const trackId = data.id;
-      const status = data.status;
-
-      if (!assetId) {
-        return new Response("Missing asset ID", { status: 400 });
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f
       }
 
       await db
         .update(videos)
-<<<<<<< HEAD
         .set({ muxTrackId: trackData.id, muxTrackStatus: trackData.status })
         .where(eq(videos.muxAssetId, trackData.asset_id));
 
@@ -278,16 +184,3 @@ export async function POST(req: Request) {
 
   return new Response("Webhook Received!", { status: 200 });
 }
-=======
-        .set({
-          muxTrackId: trackId,
-          muxTrackStatus: status,
-        })
-        .where(eq(videos.muxAssetId, assetId));
-      break;
-    }
-  }
-
-  return new Response("Webhook received", { status: 200 });
-};
->>>>>>> 7a447fe120c4e223cf4d15306c73f8e10a03464f

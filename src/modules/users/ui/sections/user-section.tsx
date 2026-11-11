@@ -1,29 +1,37 @@
 "use client";
 
 import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
 
 import { trpc } from "@/trpc/client";
 import { Separator } from "@/components/ui/separator";
 
-import { UserPageInfo, UserPageInfoSkeleton } from "../components/user-page-info";
-import { UserPageBanner, UserPageBannerSkeleton } from "../components/user-page-banner";
+import {
+  UserPageInfo,
+  UserPageInfoSkeleton,
+} from "../components/user-page-info";
+import {
+  UserPageBanner,
+  UserPageBannerSkeleton,
+} from "../components/user-page-banner";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import { useTRPC } from "@/trpc/trpc-client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 interface UserSectionProps {
   userId: string;
-};
+}
 
-export const UserSection = (props: UserSectionProps) => {
+export function UserSection(props: UserSectionProps) {
   return (
     <Suspense fallback={<UserSectionSkeleton />}>
-      <ErrorBoundary fallback={<p>Error</p>}>
+      <ErrorBoundary errorComponent={(err) => <p>Error</p>}>
         <UserSectionSuspense {...props} />
       </ErrorBoundary>
     </Suspense>
   );
-};
+}
 
-export const UserSectionSkeleton = () => {
+function UserSectionSkeleton() {
   return (
     <div className="flex flex-col">
       <UserPageBannerSkeleton />
@@ -31,10 +39,13 @@ export const UserSectionSkeleton = () => {
       <Separator />
     </div>
   );
-};
+}
 
-const UserSectionSuspense = ({ userId }: UserSectionProps) => {
-  const [user] = trpc.users.getOne.useSuspenseQuery({ id: userId });
+function UserSectionSuspense({ userId }: UserSectionProps) {
+  const trpc = useTRPC();
+  const { data: user } = useSuspenseQuery(
+    trpc.users.getOne.queryOptions({ id: userId }),
+  );
 
   return (
     <div className="flex flex-col">
@@ -43,5 +54,4 @@ const UserSectionSuspense = ({ userId }: UserSectionProps) => {
       <Separator />
     </div>
   );
-};
-
+}

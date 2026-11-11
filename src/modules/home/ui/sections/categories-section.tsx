@@ -24,10 +24,11 @@ export function CategoriesSection({ categoryId }: Props) {
 
 function SuspendedCategoriesSection({ categoryId }: Props) {
   const trpc = useTRPC();
+  const router = useRouter();
   const { data: categories, isLoading } = useSuspenseQuery(
     trpc.categories.getMany.queryOptions(),
   );
-  const router = useRouter();
+
 
   const onSelect = (value: string | null) => {
     const url = new URL(window.location.href);

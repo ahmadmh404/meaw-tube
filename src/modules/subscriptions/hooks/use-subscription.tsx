@@ -24,8 +24,31 @@ export function useSubscription({
   const queryClient = useQueryClient();
 
   // mutations
-  const subscribe = useMutation(trpc.subscriptions.create.mutationOptions());
-  const unSubscribe = useMutation(trpc.subscriptions.remove.mutationOptions());
+  const subscribe = useMutation(trpc.subscriptions.create.mutationOptions({
+    onSuccess() {
+        toast.success("Subscribed");
+      },
+
+      onError(error) {
+        toast.error("Something went wrong");
+        if (error.data?.code === "UNAUTHORIZED") {
+          clerk.openSignIn();
+        }
+      },
+  }));
+
+  const unSubscribe = useMutation(trpc.subscriptions.remove.mutationOptions({
+    onSuccess: () => {
+        toast.success("UnSubscribed");
+      },
+
+      onError(error) {
+        toast.error("Something went wrong");
+        if (error.data?.code === "UNAUTHORIZED") {
+          clerk.openSignIn();
+        }
+      },
+  }));
 
   // pending
   const isPending = subscribe.isPending || unSubscribe.isPending;
@@ -35,45 +58,24 @@ export function useSubscription({
     if (!isSubscribed) {
       subscribe.mutate(
         { creatorId: userId },
-        {
-          // TODO: revalidate subscriptions.getMany and users.getOne
-          onSuccess() {
-            toast.success("Subscribed");
-          },
-
-          onError(error) {
-            toast.error("Something went wrong");
-            if (error.data?.code === "UNAUTHORIZED") {
-              clerk.openSignIn();
-            }
-          },
-        },
       );
     } else {
       unSubscribe.mutate(
         { creatorId: userId },
-        {
-          onSuccess: () => {
-            toast.success("UnSubscribed");
-          },
-
-          onError(error) {
-            toast.error("Something went wrong");
-            if (error.data?.code === "UNAUTHORIZED") {
-              clerk.openSignIn();
-            }
-          },
-        },
       );
     }
 
     if (fromVideoId) {
       queryClient.invalidateQueries({
         queryKey: [
-          trpc.videos.getSubscriptions.queryKey({ limit: DEFAULT_LIMIT }),
+          trpc.videos.getOne.queryKey({ id: fromVideoId }),
         ],
       });
     }
+
+    queryClient.invalidateQueries({
+      queryKey: trpc.users.getOne.queryKey({id: userId})
+    })
   }
 
   return {

@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { HomeNavbar } from "../components/home-navbar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { HomeSidebar } from "../components/home-navbar/home-sidebar";
+import { HomeSidebar } from "../components/home-sidebar";
 
 interface Props {
   children: React.ReactNode;

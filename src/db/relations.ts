@@ -151,4 +151,26 @@ export const relations = defineRelations(schema, (r) => ({
       alias: "subscriptions_creator_id_fkey",
     }),
   },
+  
+  playlists: {
+    user: r.one.users({
+      from: r.playlists.userId,
+      to: r.users.id,
+    }),
+    playlistVideos: r.many.playlistVideos({
+      from: r.playlists.id,
+      to: r.playlistVideos.playlistId,
+    })
+  },
+
+  playlistVideos: {
+    playlist: r.one.playlists({
+      from: r.playlistVideos.playlistId,
+      to: r.playlists.id
+    }),
+    video: r.one.videos({
+      from: r.playlistVideos.videoId,
+      to: r.videos.id,
+    })
+  }
 }));

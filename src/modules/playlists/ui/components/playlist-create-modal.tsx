@@ -15,11 +15,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useTRPC } from "@/trpc/trpc-client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface PlaylistCreateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-};
+}
 
 const formSchema = z.object({
   name: z.string().min(1),
@@ -32,22 +34,28 @@ export const PlaylistCreateModal = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: ""
-    }
+      name: "",
+    },
   });
 
-  const utils = trpc.useUtils();
-  const create = trpc.playlists.create.useMutation({
-    onSuccess: () => {
-      utils.playlists.getMany.invalidate();
-      toast.success("Playlist created");
-      form.reset();
-      onOpenChange(false);
-    },
-    onError: () => {
-      toast.error("Something went wrong");
-    },
-  });
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const create = useMutation(
+    trpc.playlists.create.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getMany.queryKey(),
+        });
+        toast.success("Playlist created");
+        form.reset();
+        onOpenChange(false);
+      },
+      onError: () => {
+        toast.error("Something went wrong");
+      },
+    }),
+  );
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     create.mutate(values);
@@ -71,20 +79,14 @@ export const PlaylistCreateModal = ({
               <FormItem>
                 <FormLabel>Prompt</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="My favorite videos"
-                  />
+                  <Input {...field} placeholder="My favorite videos" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           <div className="flex justify-end">
-            <Button
-              disabled={create.isPending}
-              type="submit"
-            >
+            <Button disabled={create.isPending} type="submit">
               Create
             </Button>
           </div>
