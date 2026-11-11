@@ -5,11 +5,14 @@ import { Suspense } from "react";
 import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { trpc } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/trpc/trpc-client";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 
 interface PlaylistHeaderSectionProps {
@@ -17,16 +20,16 @@ interface PlaylistHeaderSectionProps {
 }
 
 export const PlaylistHeaderSection = ({
-  playlistId
+  playlistId,
 }: PlaylistHeaderSectionProps) => {
   return (
     <Suspense fallback={<PlaylistHeaderSectionSkeleton />}>
-      <ErrorBoundary errorComponent={err => <p>Error</p>}>
+      <ErrorBoundary errorComponent={(err) => <p>Error</p>}>
         <PlaylistHeaderSectionSuspense playlistId={playlistId} />
       </ErrorBoundary>
     </Suspense>
-  )
-}
+  );
+};
 
 export const PlaylistHeaderSectionSkeleton = () => {
   return (
@@ -43,19 +46,24 @@ const PlaylistHeaderSectionSuspense = ({
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const {data: playlist} = useSuspenseQuery(trpc.playlists.getOne.queryOptions({ id: playlistId }));
+  const { data: playlist } = useSuspenseQuery(
+    trpc.playlists.getOne.queryOptions({ id: playlistId }),
+  );
 
-
-  const remove = useMutation(trpc.playlists.remove.mutationOptions({
-    onSuccess: () => {
-      toast.success("Playlist removed");
-      queryClient.invalidateQueries({queryKey: trpc.playlists.getMany.queryKey()});
-      router.push("/playlists");
-    },
-    onError: () => {
-      toast.error("Something went wrong");
-    }
-  }));
+  const remove = useMutation(
+    trpc.playlists.remove.mutationOptions({
+      onSuccess: () => {
+        toast.success("Playlist removed");
+        queryClient.invalidateQueries({
+          queryKey: trpc.playlists.getMany.queryKey(),
+        });
+        router.push("/playlists");
+      },
+      onError: () => {
+        toast.error("Something went wrong");
+      },
+    }),
+  );
 
   return (
     <div className="flex justify-between items-center">

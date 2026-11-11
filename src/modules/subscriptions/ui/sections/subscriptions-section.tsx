@@ -4,7 +4,6 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Suspense } from "react";
 
-import { trpc } from "@/trpc/client";
 import { DEFAULT_LIMIT } from "@/constants";
 import { InfiniteScroll } from "@/components/infinite-scroll";
 

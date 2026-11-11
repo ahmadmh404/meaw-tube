@@ -2,7 +2,6 @@
 
 import { Suspense } from "react";
 
-import { trpc } from "@/trpc/client";
 import { Separator } from "@/components/ui/separator";
 
 import {

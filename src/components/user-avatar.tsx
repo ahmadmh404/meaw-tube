@@ -36,7 +36,8 @@ export function UserAvatar({
   return (
     <Avatar
       className={cn(avatarVariants({ size, className }))}
-      onClick={onClick}>
+      onClick={onClick}
+    >
       <AvatarImage src={imageUrl} alt={name}></AvatarImage>
     </Avatar>
   );
